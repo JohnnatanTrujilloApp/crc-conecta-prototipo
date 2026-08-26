@@ -5,9 +5,9 @@ discipulado, formación y seguimiento de la Comunidad de Renovación Cristiana.
 
 ## Estado del desarrollo
 
-El proyecto se encuentra en **Sprint 0**. La interfaz demostrativa existente se
-conserva como referencia de producto, mientras se completa la infraestructura
-obligatoria antes de iniciar el modelo de datos del Sprint 1.
+El proyecto completó el **Sprint 1**. La interfaz demostrativa incluye ahora el
+registro maestro de personas y la base PostgreSQL multi-sede permanece cerrada
+por RLS hasta incorporar autorización en el Sprint 2.
 
 Incluido en esta base:
 
@@ -48,10 +48,8 @@ pnpm test
 
 ## Próximo sprint
 
-Sprint 1 implementará, mediante migraciones SQL versionadas, las entidades
-`organizations`, `sites`, la relación opcional entre autenticación y persona, y
-`people`. No se cargarán datos personales reales y RLS se abordará antes de usar
-información real.
+Sprint 2 implementará roles, permisos, scopes y políticas RLS autorizantes. No
+se cargarán datos personales reales hasta probar el aislamiento entre sedes.
 
 ## Base técnica de Sites
 

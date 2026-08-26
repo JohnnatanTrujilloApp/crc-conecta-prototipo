@@ -14,9 +14,16 @@ La base de datos oficial del producto será PostgreSQL administrado por Supabase
   del servidor.
 - Seeds y pruebas usarán exclusivamente información ficticia.
 
-## Orden previsto
+## Sprint 1 implementado
 
-La primera migración de negocio pertenecerá al Sprint 1 e incluirá
-organizaciones, sedes y personas. Roles, permisos, scopes y sus políticas RLS se
-incorporarán en Sprint 2. Este directorio permanece deliberadamente sin tablas
-durante el cierre del Sprint 0.
+La migración `20260826010000_sprint_1_organizations_sites_people.sql` crea:
+
+- `organizations` como raíz multi-sede;
+- `sites` con unicidad por organización;
+- `people` como registro maestro independiente de autenticación;
+- `user_accounts` como vínculo opcional con `auth.users`.
+
+Las cuatro tablas tienen RLS activado y no incluyen políticas todavía, por lo
+que permanecen cerradas a las API públicas. Roles, permisos, scopes y políticas
+RLS autorizantes se incorporarán en Sprint 2. No deben cargarse datos reales
+antes de completar y probar ese sprint.

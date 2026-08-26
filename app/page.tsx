@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { PeopleView } from "@/features/people/PeopleView";
 
-type View = "dashboard" | "discipleship" | "public";
+type View = "dashboard" | "people" | "discipleship" | "public";
 type Attendance = "present" | "absent";
 type Student = { id:number; initials:string; name:string; subtitle:string; color:string; attendance:Attendance; call:boolean; visit:boolean; followup:boolean; notes:string };
 
@@ -23,27 +24,31 @@ export default function Home(){
   const [saved,setSaved]=useState(false);
   const present=useMemo(()=>students.filter(s=>s.attendance==="present").length,[students]);
   const updateStudent=(id:number,patch:Partial<Student>)=>{setSaved(false);setStudents(current=>current.map(s=>s.id===id?{...s,...patch}:s))};
-  const choose=(item:string)=>{if(item==="Inicio")setView("dashboard");if(item==="Discipulado")setView("discipleship");setMenuOpen(false)};
+  const choose=(item:string)=>{if(item==="Inicio")setView("dashboard");if(item==="Personas")setView("people");if(item==="Discipulado")setView("discipleship");setMenuOpen(false)};
 
   if(view==="public")return <PublicPortal onCampus={()=>setView("dashboard")}/>;
   return <div className="app-shell">
     <aside className={`sidebar ${menuOpen?"sidebar-open":""}`}>
       <button className="brand brand-button" onClick={()=>setView("dashboard")}><div className="brand-mark">CRC</div><div><strong>CRC Conecta</strong><span>Acompañar · Formar · Crecer</span></div></button>
-      <nav aria-label="Navegación principal">{nav.map(item=><button key={item} className={(view==="dashboard"&&item==="Inicio")||(view==="discipleship"&&item==="Discipulado")?"nav-active":""} onClick={()=>choose(item)}><span className="nav-dot"/>{item}</button>)}</nav>
+      <nav aria-label="Navegación principal">{nav.map(item=><button key={item} className={(view==="dashboard"&&item==="Inicio")||(view==="people"&&item==="Personas")||(view==="discipleship"&&item==="Discipulado")?"nav-active":""} onClick={()=>choose(item)}><span className="nav-dot"/>{item}</button>)}</nav>
       <button className="public-link" onClick={()=>setView("public")}><span>↗</span> Ver portal público</button>
       <div className="sidebar-help"><span>?</span><div><strong>Centro de ayuda</strong><small>Guías y soporte</small></div></div>
       <div className="profile-mini"><div className="avatar avatar-dark">JP</div><div><strong>Juan Pérez</strong><span>Líder de discipulado</span></div><button aria-label="Más opciones">•••</button></div>
     </aside>
     <main>
       <header className="topbar"><button className="menu-button" aria-label="Abrir menú" onClick={()=>setMenuOpen(!menuOpen)}>☰</button><div className="site-picker"><span className="pin">●</span><div><small>Sede activa</small><strong>CRC Nemocón</strong></div><span>⌄</span></div><div className="top-actions"><button aria-label="Buscar">⌕</button><button className="bell" aria-label="Notificaciones">♢<i>3</i></button><div className="avatar avatar-dark">JP</div></div></header>
-      {view==="dashboard"?<Dashboard onClass={()=>setView("discipleship")}/>:<Discipleship students={students} present={present} activeStudent={activeStudent} saved={saved} setActiveStudent={setActiveStudent} updateStudent={updateStudent} save={()=>setSaved(true)} openLesson={()=>setLessonOpen(true)}/>} 
+      {view==="dashboard"
+        ? <Dashboard onClass={()=>setView("discipleship")} onPeople={()=>setView("people")}/>
+        : view==="people"
+          ? <PeopleView/>
+          : <Discipleship students={students} present={present} activeStudent={activeStudent} saved={saved} setActiveStudent={setActiveStudent} updateStudent={updateStudent} save={()=>setSaved(true)} openLesson={()=>setLessonOpen(true)}/>}
     </main>
     {menuOpen&&<button className="scrim" aria-label="Cerrar menú" onClick={()=>setMenuOpen(false)}/>} 
     {lessonOpen&&<LessonDrawer onClose={()=>setLessonOpen(false)}/>} 
   </div>;
 }
 
-function Dashboard({onClass}:{onClass:()=>void}){
+function Dashboard({onClass,onPeople}:{onClass:()=>void;onPeople:()=>void}){
   const points=[36,32,29,34,37,35,39];
   return <div className="content dashboard-content">
     <div className="dashboard-welcome"><div><span className="eyebrow">SÁBADO, 22 DE AGOSTO</span><h1>Buenos días, Juan.</h1><p>Esta es la actividad reciente de CRC Nemocón.</p></div><button className="primary-button" onClick={onClass}>Abrir clase de hoy <span>→</span></button></div>
@@ -56,7 +61,7 @@ function Dashboard({onClass}:{onClass:()=>void}){
     <section className="dashboard-grid">
       <article className="panel attendance-chart"><div className="panel-head"><div><span className="panel-kicker">ASISTENCIA</span><h2>Tendencia semanal</h2></div><button>Últimas 7 semanas⌄</button></div><div className="chart-wrap"><div className="chart-y"><span>40</span><span>30</span><span>20</span><span>10</span><span>0</span></div><div className="bars">{points.map((p,i)=><div className="bar-col" key={i}><span className="bar-value">{p}</span><i style={{height:`${p*2.6}px`}}/><small>{["24 M","31 M","7 J","14 J","21 J","28 J","5 J"][i]}</small></div>)}</div></div><div className="chart-note"><span className="status-dot"/> Datos de referencia agregados del control de asistencia</div></article>
       <article className="panel next-class"><span className="panel-kicker">PRÓXIMA ACTIVIDAD</span><div className="class-date"><strong>23</strong><span>AGO<br/>DOM</span></div><h2>Un nuevo nacimiento<br/>y una nueva vida</h2><p>Discipulado CRC · Lección 01</p><div className="class-meta"><span>◷ 9:00 a. m.</span><span>4 estudiantes</span></div><button className="primary-button wide" onClick={onClass}>Registrar asistencia</button></article>
-      <article className="panel quick-panel"><div className="panel-head"><div><span className="panel-kicker">ACCESOS RÁPIDOS</span><h2>¿Qué deseas hacer?</h2></div></div><div className="quick-actions"><button><b>＋</b><span><strong>Registrar persona</strong><small>Primera visita o nuevo miembro</small></span></button><button onClick={onClass}><b>✓</b><span><strong>Tomar asistencia</strong><small>Culto, evento o discipulado</small></span></button><button><b>⌕</b><span><strong>Buscar persona</strong><small>Perfil, familia y progreso</small></span></button></div></article>
+      <article className="panel quick-panel"><div className="panel-head"><div><span className="panel-kicker">ACCESOS RÁPIDOS</span><h2>¿Qué deseas hacer?</h2></div></div><div className="quick-actions"><button onClick={onPeople}><b>＋</b><span><strong>Registrar persona</strong><small>Primera visita o nuevo miembro</small></span></button><button onClick={onClass}><b>✓</b><span><strong>Tomar asistencia</strong><small>Culto, evento o discipulado</small></span></button><button onClick={onPeople}><b>⌕</b><span><strong>Buscar persona</strong><small>Perfil, familia y progreso</small></span></button></div></article>
       <article className="panel alerts-panel"><div className="panel-head"><div><span className="panel-kicker">ACOMPAÑAMIENTO</span><h2>Pendientes</h2></div><button>Ver todos</button></div><div className="alert-item"><i className="alert-icon rose">!</i><div><strong>3 personas requieren seguimiento</strong><span>Ausencia o solicitud registrada</span></div><b>→</b></div><div className="alert-item"><i className="alert-icon gold">◷</i><div><strong>2 llamadas por completar</strong><span>Asignadas para esta semana</span></div><b>→</b></div><div className="alert-item"><i className="alert-icon green">✓</i><div><strong>Clase preparada</strong><span>Lección y grupo confirmados</span></div><b>→</b></div></article>
     </section>
   </div>;
