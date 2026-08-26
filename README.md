@@ -1,4 +1,59 @@
-# vinext-starter
+# CRC Conecta
+
+Plataforma multi-sede para la gestión de personas, familias, asistencia,
+discipulado, formación y seguimiento de la Comunidad de Renovación Cristiana.
+
+## Estado del desarrollo
+
+El proyecto se encuentra en **Sprint 0**. La interfaz demostrativa existente se
+conserva como referencia de producto, mientras se completa la infraestructura
+obligatoria antes de iniciar el modelo de datos del Sprint 1.
+
+Incluido en esta base:
+
+- Next.js/Vinext, React y TypeScript estricto.
+- Tailwind CSS y ESLint.
+- Cliente de Supabase separado para navegador y servidor.
+- Contrato de variables de entorno sin credenciales reales.
+- Documentación inicial de arquitectura, base de datos y requisitos.
+- Directorio de migraciones versionadas, aún sin tablas de negocio.
+- Git y despliegue compatible con Cloudflare Sites.
+
+## Configuración local
+
+1. Copie `.env.example` como `.env.local`.
+2. Complete la URL y la clave pública de su proyecto Supabase de desarrollo.
+3. Mantenga `SUPABASE_SERVICE_ROLE_KEY` únicamente en entornos de servidor.
+4. Instale dependencias y ejecute el servidor local.
+
+```bash
+pnpm install
+pnpm dev
+```
+
+## Comandos
+
+```bash
+pnpm dev
+pnpm build
+pnpm lint
+pnpm test
+```
+
+## Documentación
+
+- `docs/architecture.md`: límites y decisiones de arquitectura.
+- `docs/database.md`: reglas para PostgreSQL, migraciones y RLS.
+- `docs/requirements.md`: alcance y orden incremental del producto.
+
+## Próximo sprint
+
+Sprint 1 implementará, mediante migraciones SQL versionadas, las entidades
+`organizations`, `sites`, la relación opcional entre autenticación y persona, y
+`people`. No se cargarán datos personales reales y RLS se abordará antes de usar
+información real.
+
+## Base técnica de Sites
 
 A clean full-stack starter running on
 [vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
