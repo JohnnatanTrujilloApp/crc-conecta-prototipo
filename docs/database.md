@@ -24,6 +24,15 @@ La migración `20260826010000_sprint_1_organizations_sites_people.sql` crea:
 - `user_accounts` como vínculo opcional con `auth.users`.
 
 Las cuatro tablas tienen RLS activado y no incluyen políticas todavía, por lo
-que permanecen cerradas a las API públicas. Roles, permisos, scopes y políticas
-RLS autorizantes se incorporarán en Sprint 2. No deben cargarse datos reales
-antes de completar y probar ese sprint.
+que permanecieron cerradas a las API públicas durante el Sprint 1.
+
+## Sprint 2 implementado
+
+La segunda migración incorpora `roles`, `permissions`, `role_permissions` y
+`user_roles`. Cada asignación contiene organización, tipo de alcance y sede
+cuando corresponda. Las políticas RLS llaman una función central que exige al
+mismo tiempo permiso y coincidencia de alcance.
+
+El primer `SUPER_ADMIN` debe asignarse deliberadamente con la clave de servicio
+desde un entorno seguro. Después de ese bootstrap, las asignaciones se gestionan
+con `roles.manage`. La clave de servicio nunca se expone al navegador.

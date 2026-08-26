@@ -4,6 +4,8 @@ Las migraciones se aplican en orden y nunca se reescriben después de ser usadas
 
 - `20260826010000_sprint_1_organizations_sites_people.sql`: organización,
   sedes, registro maestro de personas y vínculo opcional con Supabase Auth.
+- `20260826020000_sprint_2_roles_permissions_scopes_rls.sql`: roles, permisos,
+  asignaciones con alcance y políticas RLS por organización/sede.
 
-Las tablas de Sprint 1 quedan bloqueadas mediante RLS sin políticas autorizantes
-hasta completar roles, permisos y scopes en Sprint 2.
+Las políticas de Sprint 2 niegan el acceso cuando no existe una asignación
+activa con el permiso y el alcance requeridos.

@@ -5,9 +5,9 @@ discipulado, formación y seguimiento de la Comunidad de Renovación Cristiana.
 
 ## Estado del desarrollo
 
-El proyecto completó el **Sprint 1**. La interfaz demostrativa incluye ahora el
-registro maestro de personas y la base PostgreSQL multi-sede permanece cerrada
-por RLS hasta incorporar autorización en el Sprint 2.
+El proyecto completó el **Sprint 2**. La interfaz demostrativa incluye el
+registro maestro de personas y la administración de accesos. PostgreSQL valida
+roles, permisos y alcance multi-sede mediante RLS.
 
 Incluido en esta base:
 
@@ -48,8 +48,9 @@ pnpm test
 
 ## Próximo sprint
 
-Sprint 2 implementará roles, permisos, scopes y políticas RLS autorizantes. No
-se cargarán datos personales reales hasta probar el aislamiento entre sedes.
+Sprint 3 implementará familias, ministerios, perfil de persona y búsqueda
+global. Antes de usar información real deben ejecutarse pruebas de aislamiento
+RLS entre sedes.
 
 ## Base técnica de Sites
 
