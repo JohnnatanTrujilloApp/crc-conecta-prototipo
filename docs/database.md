@@ -36,3 +36,10 @@ mismo tiempo permiso y coincidencia de alcance.
 El primer `SUPER_ADMIN` debe asignarse deliberadamente con la clave de servicio
 desde un entorno seguro. Después de ese bootstrap, las asignaciones se gestionan
 con `roles.manage`. La clave de servicio nunca se expone al navegador.
+
+## Sprint 3 implementado
+
+La tercera migración agrega familias, integrantes, ministerios y participación
+de personas en ministerios. Las claves compuestas impiden vincular registros de
+sedes diferentes. La función `search_people` busca por nombre, documento,
+celular, correo o código CRC y conserva las políticas RLS de `people`.

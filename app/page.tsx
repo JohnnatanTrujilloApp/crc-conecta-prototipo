@@ -3,8 +3,11 @@
 import { useMemo, useState } from "react";
 import { PeopleView } from "@/features/people/PeopleView";
 import { AccessView } from "@/features/access/AccessView";
+import { FamiliesView } from "@/features/families/FamiliesView";
+import { MinistriesView } from "@/features/ministries/MinistriesView";
+import { GlobalSearch } from "@/features/search/GlobalSearch";
 
-type View = "dashboard" | "people" | "discipleship" | "access" | "public";
+type View = "dashboard" | "people" | "families" | "ministries" | "discipleship" | "access" | "public";
 type Attendance = "present" | "absent";
 type Student = { id:number; initials:string; name:string; subtitle:string; color:string; attendance:Attendance; call:boolean; visit:boolean; followup:boolean; notes:string };
 
@@ -23,31 +26,37 @@ export default function Home(){
   const [students,setStudents]=useState(seedStudents);
   const [activeStudent,setActiveStudent]=useState<number|null>(null);
   const [saved,setSaved]=useState(false);
+  const [searchOpen,setSearchOpen]=useState(false);
   const present=useMemo(()=>students.filter(s=>s.attendance==="present").length,[students]);
   const updateStudent=(id:number,patch:Partial<Student>)=>{setSaved(false);setStudents(current=>current.map(s=>s.id===id?{...s,...patch}:s))};
-  const choose=(item:string)=>{if(item==="Inicio")setView("dashboard");if(item==="Personas")setView("people");if(item==="Discipulado")setView("discipleship");if(item==="Accesos")setView("access");setMenuOpen(false)};
+  const choose=(item:string)=>{if(item==="Inicio")setView("dashboard");if(item==="Personas")setView("people");if(item==="Familias")setView("families");if(item==="Ministerios")setView("ministries");if(item==="Discipulado")setView("discipleship");if(item==="Accesos")setView("access");setMenuOpen(false)};
 
   if(view==="public")return <PublicPortal onCampus={()=>setView("dashboard")}/>;
   return <div className="app-shell">
     <aside className={`sidebar ${menuOpen?"sidebar-open":""}`}>
       <button className="brand brand-button" onClick={()=>setView("dashboard")}><div className="brand-mark">CRC</div><div><strong>CRC Conecta</strong><span>Acompañar · Formar · Crecer</span></div></button>
-      <nav aria-label="Navegación principal">{nav.map(item=><button key={item} className={(view==="dashboard"&&item==="Inicio")||(view==="people"&&item==="Personas")||(view==="discipleship"&&item==="Discipulado")||(view==="access"&&item==="Accesos")?"nav-active":""} onClick={()=>choose(item)}><span className="nav-dot"/>{item}</button>)}</nav>
+      <nav aria-label="Navegación principal">{nav.map(item=><button key={item} className={(view==="dashboard"&&item==="Inicio")||(view==="people"&&item==="Personas")||(view==="families"&&item==="Familias")||(view==="ministries"&&item==="Ministerios")||(view==="discipleship"&&item==="Discipulado")||(view==="access"&&item==="Accesos")?"nav-active":""} onClick={()=>choose(item)}><span className="nav-dot"/>{item}</button>)}</nav>
       <button className="public-link" onClick={()=>setView("public")}><span>↗</span> Ver portal público</button>
       <div className="sidebar-help"><span>?</span><div><strong>Centro de ayuda</strong><small>Guías y soporte</small></div></div>
       <div className="profile-mini"><div className="avatar avatar-dark">JP</div><div><strong>Juan Pérez</strong><span>Líder de discipulado</span></div><button aria-label="Más opciones">•••</button></div>
     </aside>
     <main>
-      <header className="topbar"><button className="menu-button" aria-label="Abrir menú" onClick={()=>setMenuOpen(!menuOpen)}>☰</button><div className="site-picker"><span className="pin">●</span><div><small>Sede activa</small><strong>CRC Nemocón</strong></div><span>⌄</span></div><div className="top-actions"><button aria-label="Buscar">⌕</button><button className="bell" aria-label="Notificaciones">♢<i>3</i></button><div className="avatar avatar-dark">JP</div></div></header>
+      <header className="topbar"><button className="menu-button" aria-label="Abrir menú" onClick={()=>setMenuOpen(!menuOpen)}>☰</button><div className="site-picker"><span className="pin">●</span><div><small>Sede activa</small><strong>CRC Nemocón</strong></div><span>⌄</span></div><div className="top-actions"><button aria-label="Buscar" onClick={()=>setSearchOpen(true)}>⌕</button><button className="bell" aria-label="Notificaciones">♢<i>3</i></button><div className="avatar avatar-dark">JP</div></div></header>
       {view==="dashboard"
         ? <Dashboard onClass={()=>setView("discipleship")} onPeople={()=>setView("people")}/>
         : view==="people"
           ? <PeopleView/>
-          : view==="access"
-            ? <AccessView/>
-            : <Discipleship students={students} present={present} activeStudent={activeStudent} saved={saved} setActiveStudent={setActiveStudent} updateStudent={updateStudent} save={()=>setSaved(true)} openLesson={()=>setLessonOpen(true)}/>}
+          : view==="families"
+            ? <FamiliesView onPerson={()=>setView("people")}/>
+            : view==="ministries"
+              ? <MinistriesView/>
+              : view==="access"
+                ? <AccessView/>
+                : <Discipleship students={students} present={present} activeStudent={activeStudent} saved={saved} setActiveStudent={setActiveStudent} updateStudent={updateStudent} save={()=>setSaved(true)} openLesson={()=>setLessonOpen(true)}/>}
     </main>
     {menuOpen&&<button className="scrim" aria-label="Cerrar menú" onClick={()=>setMenuOpen(false)}/>} 
     {lessonOpen&&<LessonDrawer onClose={()=>setLessonOpen(false)}/>} 
+    {searchOpen&&<GlobalSearch onClose={()=>setSearchOpen(false)} onOpenPerson={()=>{setSearchOpen(false);setView("people")}}/>}
   </div>;
 }
 
