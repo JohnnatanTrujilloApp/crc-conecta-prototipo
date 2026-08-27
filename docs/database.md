@@ -50,3 +50,10 @@ La cuarta migración agrega eventos genéricos y un registro de asistencia por
 persona/evento. La restricción única evita duplicados y la función
 `dashboard_site_metrics` calcula indicadores usando las políticas RLS de las
 tablas subyacentes. `FACE_RECOGNITION` permanece reservado y bloqueado en el MVP.
+
+## Sprint 5 implementado
+
+La quinta migración incorpora `training_programs`, `training_modules` y
+`lessons`. El orden es único dentro de cada nivel y los permisos de formación
+se validan contra la organización para compartir el currículo entre sedes sin
+mezclar organizaciones. Los campos de auditoría se protegen mediante triggers.

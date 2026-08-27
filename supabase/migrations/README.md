@@ -10,6 +10,8 @@ Las migraciones se aplican en orden y nunca se reescriben después de ser usadas
   integrantes, ministerios, servicio, código CRC y búsqueda global protegida.
 - `20260827020000_sprint_4_events_attendance_dashboard.sql`: eventos genéricos,
   asistencia sin duplicados y métricas de dashboard protegidas por RLS.
+- `20260827030000_sprint_5_training_programs_modules_lessons.sql`: programas de
+  formación, módulos ordenados y lecciones con contenido y recursos.
 
 Las políticas de Sprint 2 niegan el acceso cuando no existe una asignación
 activa con el permiso y el alcance requeridos.
