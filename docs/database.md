@@ -43,3 +43,10 @@ La tercera migración agrega familias, integrantes, ministerios y participación
 de personas en ministerios. Las claves compuestas impiden vincular registros de
 sedes diferentes. La función `search_people` busca por nombre, documento,
 celular, correo o código CRC y conserva las políticas RLS de `people`.
+
+## Sprint 4 implementado
+
+La cuarta migración agrega eventos genéricos y un registro de asistencia por
+persona/evento. La restricción única evita duplicados y la función
+`dashboard_site_metrics` calcula indicadores usando las políticas RLS de las
+tablas subyacentes. `FACE_RECOGNITION` permanece reservado y bloqueado en el MVP.
