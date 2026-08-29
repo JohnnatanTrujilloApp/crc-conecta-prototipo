@@ -16,6 +16,8 @@ Las migraciones se aplican en orden y nunca se reescriben después de ser usadas
   grupos por sede, matrículas, sesiones y asistencia de clase sin duplicados.
 - `20260828020000_sprint_7_discipleship_followups_dashboard.sql`: llamadas,
   visitas, seguimientos administrativos y métricas de discipulado por sede.
+- `20260828030000_sprint_8_reports_exports_audit_logs.sql`: reportes por sede,
+  solicitudes de exportación y bitácora inmutable de acciones sensibles.
 
 Las políticas de Sprint 2 niegan el acceso cuando no existe una asignación
 activa con el permiso y el alcance requeridos.

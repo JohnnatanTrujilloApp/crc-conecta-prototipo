@@ -72,3 +72,10 @@ llamadas, visitas, observaciones y líder responsable. Los triggers exigen una
 matrícula válida y coherencia entre grupo y sesión. Las métricas del dashboard
 se calculan sobre tablas protegidas por RLS. Las notas pastorales sensibles
 permanecen fuera de este módulo.
+
+## Sprint 8 implementado
+
+La octava migración agrega solicitudes de exportación y una bitácora de
+auditoría sin permisos de modificación para usuarios autenticados. Triggers
+registran cambios sensibles en personas, roles, asistencias, matrículas y
+seguimientos. Los reportes y exportaciones respetan permisos y alcance RLS.

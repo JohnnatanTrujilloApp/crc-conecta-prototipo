@@ -5,9 +5,9 @@ discipulado, formación y seguimiento de la Comunidad de Renovación Cristiana.
 
 ## Estado del desarrollo
 
-El proyecto completó el **Sprint 7**. La interfaz demostrativa incluye personas,
-formación, grupos, matrículas, clases y seguimiento mediante llamadas y visitas.
-El dashboard resume pendientes y progreso con alcance protegido por RLS.
+El proyecto completó el **Sprint 8**. La interfaz demostrativa incluye reportes
+por sede y periodo, exportaciones autorizadas y una bitácora de auditoría
+inmutable para acciones sensibles, todo protegido mediante permisos y RLS.
 
 Incluido en esta base:
 
@@ -48,8 +48,8 @@ pnpm test
 
 ## Próximo sprint
 
-Sprint 8 implementará reportes, exportaciones y registros de auditoría. Antes
-de usar información real deben ejecutarse pruebas de aislamiento RLS.
+Sprint 9 implementará el sitio público, administración de contenido y SEO.
+Antes de usar información real deben ejecutarse pruebas de aislamiento RLS.
 
 ## Base técnica de Sites
 
