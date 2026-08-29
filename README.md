@@ -140,6 +140,12 @@ or enforce explicit server-side membership or allowlist checks.
 Use SIWC for account pages, user-specific dashboards, saved records, and write
 actions tied to the current ChatGPT user. Leave public content anonymous.
 
+## Estado del producto
+
+Sprints 1–9 implementados. Sprint 9 incorpora portal público responsive,
+administración editorial, borradores/publicación, metadatos SEO, sitemap,
+robots y solicitudes públicas protegidas por RLS.
+
 ## Useful Commands
 
 - `npm run dev`: start local development

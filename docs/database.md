@@ -79,3 +79,11 @@ La octava migración agrega solicitudes de exportación y una bitácora de
 auditoría sin permisos de modificación para usuarios autenticados. Triggers
 registran cambios sensibles en personas, roles, asistencias, matrículas y
 seguimientos. Los reportes y exportaciones respetan permisos y alcance RLS.
+
+## Sprint 9 implementado
+
+La novena migración incorpora páginas públicas y bloques editoriales con flujo
+de borrador/publicación, metadatos SEO y alcance opcional por sede. Las
+solicitudes de orientación, oración y contacto se reciben mediante una función
+validada; sus datos personales no tienen lectura pública y sólo son visibles
+para roles autorizados bajo RLS.

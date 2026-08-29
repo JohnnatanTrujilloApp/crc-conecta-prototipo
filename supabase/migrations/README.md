@@ -18,6 +18,8 @@ Las migraciones se aplican en orden y nunca se reescriben después de ser usadas
   visitas, seguimientos administrativos y métricas de discipulado por sede.
 - `20260828030000_sprint_8_reports_exports_audit_logs.sql`: reportes por sede,
   solicitudes de exportación y bitácora inmutable de acciones sensibles.
+- `20260828040000_sprint_9_public_cms_seo.sql`: páginas y bloques públicos,
+  solicitudes protegidas, permisos editoriales y políticas RLS por sede.
 
 Las políticas de Sprint 2 niegan el acceso cuando no existe una asignación
 activa con el permiso y el alcance requeridos.

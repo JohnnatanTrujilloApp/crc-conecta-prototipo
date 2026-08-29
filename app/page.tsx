@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useMemo, useState } from "react";
@@ -11,8 +12,10 @@ import { TrainingView } from "@/features/training/TrainingView";
 import { GroupsView } from "@/features/groups/GroupsView";
 import { FollowupsView } from "@/features/followups/FollowupsView";
 import { ReportsView } from "@/features/reports/ReportsView";
+import { PublicSiteView } from "@/features/public-site/PublicSiteView";
+import { ContentView } from "@/features/content/ContentView";
 
-type View = "dashboard" | "people" | "families" | "ministries" | "attendance" | "discipleship" | "classroom" | "training" | "followups" | "reports" | "access" | "public";
+type View = "dashboard" | "people" | "families" | "ministries" | "attendance" | "discipleship" | "classroom" | "training" | "followups" | "reports" | "content" | "access" | "public";
 type Attendance = "present" | "absent";
 type Student = { id:number; initials:string; name:string; subtitle:string; color:string; attendance:Attendance; call:boolean; visit:boolean; followup:boolean; notes:string };
 
@@ -22,7 +25,7 @@ const seedStudents:Student[]=[
   {id:3,initials:"CM",name:"Carlos Martínez",subtitle:"Progreso 50% · 5 de 10 lecciones",color:"#c9c2dd",attendance:"absent",call:false,visit:false,followup:true,notes:"Llamar para conocer cómo se encuentra."},
   {id:4,initials:"AP",name:"Ana Pérez",subtitle:"Progreso 70% · 7 de 10 lecciones",color:"#e7c8ce",attendance:"present",call:false,visit:false,followup:false,notes:""},
 ];
-const nav=["Inicio","Personas","Familias","Asistencia","Discipulado","Formación","Seguimiento","Ministerios","Reportes","Accesos"];
+const nav=["Inicio","Personas","Familias","Asistencia","Discipulado","Formación","Seguimiento","Ministerios","Reportes","Contenido","Accesos"];
 
 export default function Home(){
   const [view,setView]=useState<View>("dashboard");
@@ -35,13 +38,13 @@ export default function Home(){
   const [attendanceCount,setAttendanceCount]=useState(32);
   const present=useMemo(()=>students.filter(s=>s.attendance==="present").length,[students]);
   const updateStudent=(id:number,patch:Partial<Student>)=>{setSaved(false);setStudents(current=>current.map(s=>s.id===id?{...s,...patch}:s))};
-  const choose=(item:string)=>{if(item==="Inicio")setView("dashboard");if(item==="Personas")setView("people");if(item==="Familias")setView("families");if(item==="Ministerios")setView("ministries");if(item==="Asistencia")setView("attendance");if(item==="Discipulado")setView("discipleship");if(item==="Formación")setView("training");if(item==="Seguimiento")setView("followups");if(item==="Reportes")setView("reports");if(item==="Accesos")setView("access");setMenuOpen(false)};
+  const choose=(item:string)=>{if(item==="Inicio")setView("dashboard");if(item==="Personas")setView("people");if(item==="Familias")setView("families");if(item==="Ministerios")setView("ministries");if(item==="Asistencia")setView("attendance");if(item==="Discipulado")setView("discipleship");if(item==="Formación")setView("training");if(item==="Seguimiento")setView("followups");if(item==="Reportes")setView("reports");if(item==="Contenido")setView("content");if(item==="Accesos")setView("access");setMenuOpen(false)};
 
-  if(view==="public")return <PublicPortal onCampus={()=>setView("dashboard")}/>;
+  if(view==="public")return <PublicSiteView onCampus={()=>setView("dashboard")}/>;
   return <div className="app-shell">
     <aside className={`sidebar ${menuOpen?"sidebar-open":""}`}>
       <button className="brand brand-button" onClick={()=>setView("dashboard")}><div className="brand-mark">CRC</div><div><strong>CRC Conecta</strong><span>Acompañar · Formar · Crecer</span></div></button>
-      <nav aria-label="Navegación principal">{nav.map(item=><button key={item} className={(view==="dashboard"&&item==="Inicio")||(view==="people"&&item==="Personas")||(view==="families"&&item==="Familias")||(view==="ministries"&&item==="Ministerios")||(view==="attendance"&&item==="Asistencia")||((view==="discipleship"||view==="classroom")&&item==="Discipulado")||(view==="training"&&item==="Formación")||(view==="followups"&&item==="Seguimiento")||(view==="reports"&&item==="Reportes")||(view==="access"&&item==="Accesos")?"nav-active":""} onClick={()=>choose(item)}><span className="nav-dot"/>{item}</button>)}</nav>
+      <nav aria-label="Navegación principal">{nav.map(item=><button key={item} className={(view==="dashboard"&&item==="Inicio")||(view==="people"&&item==="Personas")||(view==="families"&&item==="Familias")||(view==="ministries"&&item==="Ministerios")||(view==="attendance"&&item==="Asistencia")||((view==="discipleship"||view==="classroom")&&item==="Discipulado")||(view==="training"&&item==="Formación")||(view==="followups"&&item==="Seguimiento")||(view==="reports"&&item==="Reportes")||(view==="content"&&item==="Contenido")||(view==="access"&&item==="Accesos")?"nav-active":""} onClick={()=>choose(item)}><span className="nav-dot"/>{item}</button>)}</nav>
       <button className="public-link" onClick={()=>setView("public")}><span>↗</span> Ver portal público</button>
       <div className="sidebar-help"><span>?</span><div><strong>Centro de ayuda</strong><small>Guías y soporte</small></div></div>
       <div className="profile-mini"><div className="avatar avatar-dark">JP</div><div><strong>Juan Pérez</strong><span>Líder de discipulado</span></div><button aria-label="Más opciones">•••</button></div>
@@ -66,6 +69,8 @@ export default function Home(){
                   ? <FollowupsView/>
                 : view==="reports"
                   ? <ReportsView/>
+                : view==="content"
+                  ? <ContentView/>
                 : view==="access"
                   ? <AccessView/>
                   : <Discipleship students={students} present={present} activeStudent={activeStudent} saved={saved} setActiveStudent={setActiveStudent} updateStudent={updateStudent} save={()=>setSaved(true)} openLesson={()=>setLessonOpen(true)}/>}
