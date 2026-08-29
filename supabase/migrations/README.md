@@ -20,6 +20,8 @@ Las migraciones se aplican en orden y nunca se reescriben después de ser usadas
   solicitudes de exportación y bitácora inmutable de acciones sensibles.
 - `20260828040000_sprint_9_public_cms_seo.sql`: páginas y bloques públicos,
   solicitudes protegidas, permisos editoriales y políticas RLS por sede.
+- `20260829010000_sprint_10_supabase_sessions_crud.sql`: contexto de sesión,
+  archivado lógico y protección adicional del CRUD de personas.
 
 Las políticas de Sprint 2 niegan el acceso cuando no existe una asignación
 activa con el permiso y el alcance requeridos.

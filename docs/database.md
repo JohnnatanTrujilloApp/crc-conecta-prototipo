@@ -87,3 +87,12 @@ de borrador/publicación, metadatos SEO y alcance opcional por sede. Las
 solicitudes de orientación, oración y contacto se reciben mediante una función
 validada; sus datos personales no tienen lectura pública y sólo son visibles
 para roles autorizados bajo RLS.
+
+## Sprint 10 preparado
+
+La aplicación usa sesiones persistentes de Supabase Auth y el registro de
+personas consulta y escribe directamente con la clave pública, por lo que RLS
+decide cada operación. El borrado se implementa como archivado lógico y una
+función expone únicamente los roles y alcances de la sesión actual. Las
+migraciones deben aplicarse primero en Supabase de desarrollo y probarse con
+usuarios de dos sedes antes de utilizar datos reales.

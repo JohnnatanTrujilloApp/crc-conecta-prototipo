@@ -1,12 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { personStatuses, type Person, type PersonDraft } from "./types";
 import { validatePersonDraft, type PersonDraftErrors } from "./validation";
+import { useAuth } from "@/features/auth/AuthProvider";
+import { createPerson,loadPeopleData,updatePerson,type SiteOption } from "./repository";
 
-const sites = [
-  { id: "nemocon-demo", name: "CRC Nemocón Demo" },
-  { id: "central-demo", name: "CRC Central Demo" },
+const demoSites:SiteOption[] = [
+  { id: "nemocon-demo", name: "CRC Nemocón Demo",organizationId:"demo" },
+  { id: "central-demo", name: "CRC Central Demo",organizationId:"demo" },
 ];
 
 const statusLabels: Record<Person["status"], string> = {
@@ -37,7 +39,11 @@ const emptyDraft: PersonDraft = {
 };
 
 export function PeopleView() {
+  const {configured,session}=useAuth();
   const [people, setPeople] = useState(seedPeople);
+  const [sites,setSites]=useState<SiteOption[]>(demoSites);
+  const [loading,setLoading]=useState(configured);
+  const [loadError,setLoadError]=useState("");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"ALL" | Person["status"]>("ALL");
   const [formOpen, setFormOpen] = useState(false);
@@ -45,6 +51,9 @@ export function PeopleView() {
   const [errors, setErrors] = useState<PersonDraftErrors>({});
   const [notice, setNotice] = useState("");
   const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+  const [editingId,setEditingId]=useState<string|null>(null);
+
+  useEffect(()=>{if(!configured||!session)return;let active=true;loadPeopleData().then(data=>{if(!active)return;setPeople(data.people);setSites(data.sites);setDraft(current=>({...current,siteId:data.sites[0]?.id??""}));setLoadError("")}).catch(()=>active&&setLoadError("No fue posible cargar las personas autorizadas. Verifica permisos y migraciones.")).finally(()=>active&&setLoading(false));return()=>{active=false}},[configured,session]);
 
   const filteredPeople = useMemo(() => {
     const normalized = query.trim().toLocaleLowerCase("es");
@@ -60,7 +69,7 @@ export function PeopleView() {
     setErrors((current) => ({ ...current, [key]: undefined }));
   };
 
-  const savePerson = (event: React.FormEvent<HTMLFormElement>) => {
+  const savePerson = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const nextErrors = validatePersonDraft(draft);
     if (Object.keys(nextErrors).length) {
@@ -69,8 +78,8 @@ export function PeopleView() {
     }
 
     const selectedSite = sites.find((site) => site.id === draft.siteId) ?? sites[0];
-    setPeople((current) => [
-      {
+    if(!selectedSite){setErrors(current=>({...current,siteId:"No hay una sede autorizada."}));return}
+    try{const person=configured&&session?(editingId?await updatePerson(editingId,draft,selectedSite):await createPerson(draft,selectedSite)):{
         id: `demo-${Date.now()}`,
         ...draft,
         firstName: draft.firstName.trim(),
@@ -79,22 +88,20 @@ export function PeopleView() {
         phone: draft.phone.trim(),
         siteName: selectedSite.name,
         firstVisitDate: new Date().toISOString().slice(0, 10),
-      },
-      ...current,
-    ]);
+      };setPeople((current) => editingId?current.map(item=>item.id===editingId?person:item):[person,...current]);
     setDraft(emptyDraft);
     setErrors({});
     setFormOpen(false);
-    setNotice("Persona agregada a la demostración. La persistencia se activará al conectar Supabase.");
+    setNotice(configured&&session?`Persona ${editingId?"actualizada":"guardada"} en Supabase con el alcance de la sede.`:`Persona ${editingId?"actualizada":"agregada"} en el modo demostración.`);setEditingId(null);}catch{setLoadError("No fue posible guardar. Confirma que tu rol tenga permisos sobre esta sede.")}
   };
 
   return <div className="content people-content">
     <div className="people-heading"><div><span className="eyebrow">REGISTRO MAESTRO</span><h1>Personas</h1><p>Un registro único por persona, tenga o no una cuenta de acceso.</p></div><button className="primary-button" onClick={() => { setNotice(""); setFormOpen(true); }}>＋ Registrar persona</button></div>
-    <div className="demo-notice"><strong>Datos ficticios</strong><span>Sprint 3 integra perfil, familia, ministerios y búsqueda global sin utilizar información real.</span></div>
+    <div className="demo-notice"><strong>{configured&&session?"Supabase conectado":"Modo demostración"}</strong><span>{configured&&session?"Lectura y creación protegidas por la sesión y las políticas RLS.":"Configure las variables Supabase para activar persistencia real."}</span></div>
     <section className="people-summary"><article><span>Total visible</span><strong>{filteredPeople.length}</strong></article><article><span>Visitantes</span><strong>{people.filter((person) => person.status === "VISITOR").length}</strong></article><article><span>Con cuenta</span><strong>0</strong><small>Vinculación opcional</small></article></section>
     <section className="people-panel">
       <div className="people-tools"><label className="people-search"><span>⌕</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por nombre, celular o correo" aria-label="Buscar personas"/></label><select value={status} onChange={(event) => setStatus(event.target.value as "ALL" | Person["status"])} aria-label="Filtrar por estado"><option value="ALL">Todos los estados</option>{personStatuses.map((item) => <option value={item} key={item}>{statusLabels[item]}</option>)}</select></div>
-      {notice && <div className="people-success" role="status">✓ {notice}</div>}
+      {loading&&<div className="people-success" role="status">Cargando registros autorizados…</div>}{loadError&&<div className="auth-error" role="alert">{loadError}</div>}{notice && <div className="people-success" role="status">✓ {notice}</div>}
       {filteredPeople.length ? <div className="people-table-wrap"><table className="people-table"><thead><tr><th>Persona</th><th>Sede</th><th>Contacto</th><th>Estado</th><th>Primera visita</th><th><span className="sr-only">Acciones</span></th></tr></thead><tbody>{filteredPeople.map((person) => <tr key={person.id}><td><div className="person-cell"><span>{person.firstName[0]}{person.lastName[0]}</span><div><strong>{person.firstName} {person.lastName}</strong><small>Sin cuenta de acceso</small></div></div></td><td>{person.siteName}</td><td><strong className="contact-primary">{person.phone}</strong><small>{person.email ?? "Sin correo"}</small></td><td><span className={`person-status status-${person.status.toLowerCase()}`}>{statusLabels[person.status]}</span></td><td>{new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(`${person.firstVisitDate}T12:00:00`))}</td><td><button className="row-action" onClick={()=>setSelectedPerson(person)} aria-label={`Ver perfil de ${person.firstName} ${person.lastName}`}>→</button></td></tr>)}</tbody></table></div>:<div className="people-empty"><strong>No encontramos personas</strong><span>Ajuste la búsqueda o registre una nueva persona.</span></div>}
     </section>
     {formOpen && <div className="modal-layer"><button className="modal-scrim" onClick={() => setFormOpen(false)} aria-label="Cerrar formulario"/><section className="person-modal" role="dialog" aria-modal="true" aria-labelledby="new-person-title"><div className="modal-head"><div><span className="eyebrow">NUEVO REGISTRO</span><h2 id="new-person-title">Registrar persona</h2><p>Solicite sólo la información necesaria para el primer contacto.</p></div><button onClick={() => setFormOpen(false)} aria-label="Cerrar">×</button></div><form onSubmit={savePerson} noValidate><div className="form-grid"><Field label="Nombre" error={errors.firstName}><input value={draft.firstName} onChange={(event) => updateDraft("firstName", event.target.value)} /></Field><Field label="Apellido" error={errors.lastName}><input value={draft.lastName} onChange={(event) => updateDraft("lastName", event.target.value)} /></Field><Field label="Celular" error={errors.phone}><input inputMode="tel" value={draft.phone} onChange={(event) => updateDraft("phone", event.target.value)} /></Field><Field label="Correo opcional" error={errors.email}><input type="email" value={draft.email} onChange={(event) => updateDraft("email", event.target.value)} /></Field><Field label="Sede" error={errors.siteId}><select value={draft.siteId} onChange={(event) => updateDraft("siteId", event.target.value)}>{sites.map((site) => <option key={site.id} value={site.id}>{site.name}</option>)}</select></Field><Field label="Estado inicial"><select value={draft.status} onChange={(event) => updateDraft("status", event.target.value as Person["status"])}>{personStatuses.slice(0, 3).map((item) => <option key={item} value={item}>{statusLabels[item]}</option>)}</select></Field></div><div className="privacy-note"><b>Privacidad</b><span>En producción este registro requerirá autorización de tratamiento de datos y permisos de sede.</span></div><div className="modal-actions"><button type="button" className="secondary-button" onClick={() => setFormOpen(false)}>Cancelar</button><button className="primary-button" type="submit">Guardar persona</button></div></form></section></div>}

@@ -14,6 +14,8 @@ import { FollowupsView } from "@/features/followups/FollowupsView";
 import { ReportsView } from "@/features/reports/ReportsView";
 import { PublicSiteView } from "@/features/public-site/PublicSiteView";
 import { ContentView } from "@/features/content/ContentView";
+import { AuthProvider,useAuth } from "@/features/auth/AuthProvider";
+import { LoginView } from "@/features/auth/LoginView";
 
 type View = "dashboard" | "people" | "families" | "ministries" | "attendance" | "discipleship" | "classroom" | "training" | "followups" | "reports" | "content" | "access" | "public";
 type Attendance = "present" | "absent";
@@ -27,7 +29,10 @@ const seedStudents:Student[]=[
 ];
 const nav=["Inicio","Personas","Familias","Asistencia","Discipulado","Formación","Seguimiento","Ministerios","Reportes","Contenido","Accesos"];
 
-export default function Home(){
+export default function Home(){return <AuthProvider><Application/></AuthProvider>}
+
+function Application(){
+  const {configured,loading,session,signOut}=useAuth();
   const [view,setView]=useState<View>("dashboard");
   const [menuOpen,setMenuOpen]=useState(false);
   const [lessonOpen,setLessonOpen]=useState(false);
@@ -41,13 +46,15 @@ export default function Home(){
   const choose=(item:string)=>{if(item==="Inicio")setView("dashboard");if(item==="Personas")setView("people");if(item==="Familias")setView("families");if(item==="Ministerios")setView("ministries");if(item==="Asistencia")setView("attendance");if(item==="Discipulado")setView("discipleship");if(item==="Formación")setView("training");if(item==="Seguimiento")setView("followups");if(item==="Reportes")setView("reports");if(item==="Contenido")setView("content");if(item==="Accesos")setView("access");setMenuOpen(false)};
 
   if(view==="public")return <PublicSiteView onCampus={()=>setView("dashboard")}/>;
+  if(configured&&loading)return <main className="login-page"><div className="login-card"><strong>Preparando sesión segura…</strong></div></main>;
+  if(configured&&!session)return <LoginView onPublic={()=>setView("public")}/>;
   return <div className="app-shell">
     <aside className={`sidebar ${menuOpen?"sidebar-open":""}`}>
       <button className="brand brand-button" onClick={()=>setView("dashboard")}><div className="brand-mark">CRC</div><div><strong>CRC Conecta</strong><span>Acompañar · Formar · Crecer</span></div></button>
       <nav aria-label="Navegación principal">{nav.map(item=><button key={item} className={(view==="dashboard"&&item==="Inicio")||(view==="people"&&item==="Personas")||(view==="families"&&item==="Familias")||(view==="ministries"&&item==="Ministerios")||(view==="attendance"&&item==="Asistencia")||((view==="discipleship"||view==="classroom")&&item==="Discipulado")||(view==="training"&&item==="Formación")||(view==="followups"&&item==="Seguimiento")||(view==="reports"&&item==="Reportes")||(view==="content"&&item==="Contenido")||(view==="access"&&item==="Accesos")?"nav-active":""} onClick={()=>choose(item)}><span className="nav-dot"/>{item}</button>)}</nav>
       <button className="public-link" onClick={()=>setView("public")}><span>↗</span> Ver portal público</button>
       <div className="sidebar-help"><span>?</span><div><strong>Centro de ayuda</strong><small>Guías y soporte</small></div></div>
-      <div className="profile-mini"><div className="avatar avatar-dark">JP</div><div><strong>Juan Pérez</strong><span>Líder de discipulado</span></div><button aria-label="Más opciones">•••</button></div>
+      <div className="profile-mini"><div className="avatar avatar-dark">{session?.user.email?.slice(0,2).toUpperCase()??"JP"}</div><div><strong>{session?.user.email??"Juan Pérez"}</strong><span>{configured?"Sesión Supabase":"Modo demostración"}</span></div><button aria-label={configured?"Cerrar sesión":"Más opciones"} onClick={()=>{if(configured)void signOut()}}>{configured?"Salir":"•••"}</button></div>
     </aside>
     <main>
       <header className="topbar"><button className="menu-button" aria-label="Abrir menú" onClick={()=>setMenuOpen(!menuOpen)}>☰</button><div className="site-picker"><span className="pin">●</span><div><small>Sede activa</small><strong>CRC Nemocón</strong></div><span>⌄</span></div><div className="top-actions"><button aria-label="Buscar" onClick={()=>setSearchOpen(true)}>⌕</button><button className="bell" aria-label="Notificaciones">♢<i>3</i></button><div className="avatar avatar-dark">JP</div></div></header>

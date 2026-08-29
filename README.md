@@ -5,9 +5,10 @@ discipulado, formación y seguimiento de la Comunidad de Renovación Cristiana.
 
 ## Estado del desarrollo
 
-El proyecto completó el **Sprint 8**. La interfaz demostrativa incluye reportes
-por sede y periodo, exportaciones autorizadas y una bitácora de auditoría
-inmutable para acciones sensibles, todo protegido mediante permisos y RLS.
+El proyecto completó la implementación local del **Sprint 10**. El Campus puede
+usar sesiones persistentes de Supabase Auth y el registro de personas dispone
+de lectura y escritura reales protegidas por RLS, conservando un modo demo
+explícito cuando no hay un proyecto Supabase configurado.
 
 Incluido en esta base:
 
@@ -46,10 +47,11 @@ pnpm test
 - `docs/database.md`: reglas para PostgreSQL, migraciones y RLS.
 - `docs/requirements.md`: alcance y orden incremental del producto.
 
-## Próximo sprint
+## Activación de Supabase
 
-Sprint 9 implementará el sitio público, administración de contenido y SEO.
-Antes de usar información real deben ejecutarse pruebas de aislamiento RLS.
+Configure `.env.local`, vincule un proyecto Supabase de desarrollo, aplique las
+migraciones en orden y cargue `supabase/seed.sql`. Antes de usar información
+real deben aprobarse pruebas de aislamiento RLS con usuarios de dos sedes.
 
 ## Base técnica de Sites
 
