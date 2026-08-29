@@ -64,3 +64,11 @@ La sexta migración agrega grupos por sede, matrículas, sesiones y asistencia d
 clase. Las claves compuestas impiden relaciones entre sedes y los triggers
 validan que la lección pertenezca al programa del grupo y que cada asistente
 esté matriculado. La combinación sesión/persona evita registros duplicados.
+
+## Sprint 7 implementado
+
+La séptima migración agrega seguimientos administrativos de discipulado con
+llamadas, visitas, observaciones y líder responsable. Los triggers exigen una
+matrícula válida y coherencia entre grupo y sesión. Las métricas del dashboard
+se calculan sobre tablas protegidas por RLS. Las notas pastorales sensibles
+permanecen fuera de este módulo.

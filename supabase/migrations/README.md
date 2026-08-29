@@ -14,6 +14,8 @@ Las migraciones se aplican en orden y nunca se reescriben después de ser usadas
   formación, módulos ordenados y lecciones con contenido y recursos.
 - `20260828010000_sprint_6_groups_enrollments_class_sessions_attendance.sql`:
   grupos por sede, matrículas, sesiones y asistencia de clase sin duplicados.
+- `20260828020000_sprint_7_discipleship_followups_dashboard.sql`: llamadas,
+  visitas, seguimientos administrativos y métricas de discipulado por sede.
 
 Las políticas de Sprint 2 niegan el acceso cuando no existe una asignación
 activa con el permiso y el alcance requeridos.

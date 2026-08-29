@@ -9,8 +9,9 @@ import { GlobalSearch } from "@/features/search/GlobalSearch";
 import { AttendanceView } from "@/features/attendance/AttendanceView";
 import { TrainingView } from "@/features/training/TrainingView";
 import { GroupsView } from "@/features/groups/GroupsView";
+import { FollowupsView } from "@/features/followups/FollowupsView";
 
-type View = "dashboard" | "people" | "families" | "ministries" | "attendance" | "discipleship" | "classroom" | "training" | "access" | "public";
+type View = "dashboard" | "people" | "families" | "ministries" | "attendance" | "discipleship" | "classroom" | "training" | "followups" | "access" | "public";
 type Attendance = "present" | "absent";
 type Student = { id:number; initials:string; name:string; subtitle:string; color:string; attendance:Attendance; call:boolean; visit:boolean; followup:boolean; notes:string };
 
@@ -20,7 +21,7 @@ const seedStudents:Student[]=[
   {id:3,initials:"CM",name:"Carlos Martínez",subtitle:"Progreso 50% · 5 de 10 lecciones",color:"#c9c2dd",attendance:"absent",call:false,visit:false,followup:true,notes:"Llamar para conocer cómo se encuentra."},
   {id:4,initials:"AP",name:"Ana Pérez",subtitle:"Progreso 70% · 7 de 10 lecciones",color:"#e7c8ce",attendance:"present",call:false,visit:false,followup:false,notes:""},
 ];
-const nav=["Inicio","Personas","Familias","Asistencia","Discipulado","Formación","Ministerios","Reportes","Accesos"];
+const nav=["Inicio","Personas","Familias","Asistencia","Discipulado","Formación","Seguimiento","Ministerios","Reportes","Accesos"];
 
 export default function Home(){
   const [view,setView]=useState<View>("dashboard");
@@ -33,13 +34,13 @@ export default function Home(){
   const [attendanceCount,setAttendanceCount]=useState(32);
   const present=useMemo(()=>students.filter(s=>s.attendance==="present").length,[students]);
   const updateStudent=(id:number,patch:Partial<Student>)=>{setSaved(false);setStudents(current=>current.map(s=>s.id===id?{...s,...patch}:s))};
-  const choose=(item:string)=>{if(item==="Inicio")setView("dashboard");if(item==="Personas")setView("people");if(item==="Familias")setView("families");if(item==="Ministerios")setView("ministries");if(item==="Asistencia")setView("attendance");if(item==="Discipulado")setView("discipleship");if(item==="Formación")setView("training");if(item==="Accesos")setView("access");setMenuOpen(false)};
+  const choose=(item:string)=>{if(item==="Inicio")setView("dashboard");if(item==="Personas")setView("people");if(item==="Familias")setView("families");if(item==="Ministerios")setView("ministries");if(item==="Asistencia")setView("attendance");if(item==="Discipulado")setView("discipleship");if(item==="Formación")setView("training");if(item==="Seguimiento")setView("followups");if(item==="Accesos")setView("access");setMenuOpen(false)};
 
   if(view==="public")return <PublicPortal onCampus={()=>setView("dashboard")}/>;
   return <div className="app-shell">
     <aside className={`sidebar ${menuOpen?"sidebar-open":""}`}>
       <button className="brand brand-button" onClick={()=>setView("dashboard")}><div className="brand-mark">CRC</div><div><strong>CRC Conecta</strong><span>Acompañar · Formar · Crecer</span></div></button>
-      <nav aria-label="Navegación principal">{nav.map(item=><button key={item} className={(view==="dashboard"&&item==="Inicio")||(view==="people"&&item==="Personas")||(view==="families"&&item==="Familias")||(view==="ministries"&&item==="Ministerios")||(view==="attendance"&&item==="Asistencia")||((view==="discipleship"||view==="classroom")&&item==="Discipulado")||(view==="training"&&item==="Formación")||(view==="access"&&item==="Accesos")?"nav-active":""} onClick={()=>choose(item)}><span className="nav-dot"/>{item}</button>)}</nav>
+      <nav aria-label="Navegación principal">{nav.map(item=><button key={item} className={(view==="dashboard"&&item==="Inicio")||(view==="people"&&item==="Personas")||(view==="families"&&item==="Familias")||(view==="ministries"&&item==="Ministerios")||(view==="attendance"&&item==="Asistencia")||((view==="discipleship"||view==="classroom")&&item==="Discipulado")||(view==="training"&&item==="Formación")||(view==="followups"&&item==="Seguimiento")||(view==="access"&&item==="Accesos")?"nav-active":""} onClick={()=>choose(item)}><span className="nav-dot"/>{item}</button>)}</nav>
       <button className="public-link" onClick={()=>setView("public")}><span>↗</span> Ver portal público</button>
       <div className="sidebar-help"><span>?</span><div><strong>Centro de ayuda</strong><small>Guías y soporte</small></div></div>
       <div className="profile-mini"><div className="avatar avatar-dark">JP</div><div><strong>Juan Pérez</strong><span>Líder de discipulado</span></div><button aria-label="Más opciones">•••</button></div>
@@ -47,7 +48,7 @@ export default function Home(){
     <main>
       <header className="topbar"><button className="menu-button" aria-label="Abrir menú" onClick={()=>setMenuOpen(!menuOpen)}>☰</button><div className="site-picker"><span className="pin">●</span><div><small>Sede activa</small><strong>CRC Nemocón</strong></div><span>⌄</span></div><div className="top-actions"><button aria-label="Buscar" onClick={()=>setSearchOpen(true)}>⌕</button><button className="bell" aria-label="Notificaciones">♢<i>3</i></button><div className="avatar avatar-dark">JP</div></div></header>
       {view==="dashboard"
-        ? <Dashboard attendanceCount={attendanceCount} onClass={()=>setView("classroom")} onPeople={()=>setView("people")} onAttendance={()=>setView("attendance")}/>
+        ? <Dashboard attendanceCount={attendanceCount} onClass={()=>setView("classroom")} onPeople={()=>setView("people")} onAttendance={()=>setView("attendance")} onFollowups={()=>setView("followups")}/>
         : view==="people"
           ? <PeopleView/>
           : view==="families"
@@ -60,6 +61,8 @@ export default function Home(){
                   ? <TrainingView/>
                 : view==="discipleship"
                   ? <GroupsView onOpenClass={()=>setView("classroom")}/>
+                : view==="followups"
+                  ? <FollowupsView/>
                 : view==="access"
                   ? <AccessView/>
                   : <Discipleship students={students} present={present} activeStudent={activeStudent} saved={saved} setActiveStudent={setActiveStudent} updateStudent={updateStudent} save={()=>setSaved(true)} openLesson={()=>setLessonOpen(true)}/>}
@@ -70,7 +73,7 @@ export default function Home(){
   </div>;
 }
 
-function Dashboard({attendanceCount,onClass,onPeople,onAttendance}:{attendanceCount:number;onClass:()=>void;onPeople:()=>void;onAttendance:()=>void}){
+function Dashboard({attendanceCount,onClass,onPeople,onAttendance,onFollowups}:{attendanceCount:number;onClass:()=>void;onPeople:()=>void;onAttendance:()=>void;onFollowups:()=>void}){
   const points=[36,32,29,34,37,35,39];
   return <div className="content dashboard-content">
     <div className="dashboard-welcome"><div><span className="eyebrow">SÁBADO, 22 DE AGOSTO</span><h1>Buenos días, Juan.</h1><p>Esta es la actividad reciente de CRC Nemocón.</p></div><button className="primary-button" onClick={onClass}>Abrir clase de hoy <span>→</span></button></div>
@@ -84,7 +87,7 @@ function Dashboard({attendanceCount,onClass,onPeople,onAttendance}:{attendanceCo
       <article className="panel attendance-chart"><div className="panel-head"><div><span className="panel-kicker">ASISTENCIA</span><h2>Tendencia semanal</h2></div><button>Últimas 7 semanas⌄</button></div><div className="chart-wrap"><div className="chart-y"><span>40</span><span>30</span><span>20</span><span>10</span><span>0</span></div><div className="bars">{points.map((p,i)=><div className="bar-col" key={i}><span className="bar-value">{p}</span><i style={{height:`${p*2.6}px`}}/><small>{["24 M","31 M","7 J","14 J","21 J","28 J","5 J"][i]}</small></div>)}</div></div><div className="chart-note"><span className="status-dot"/> Datos de referencia agregados del control de asistencia</div></article>
       <article className="panel next-class"><span className="panel-kicker">PRÓXIMA ACTIVIDAD</span><div className="class-date"><strong>23</strong><span>AGO<br/>DOM</span></div><h2>Un nuevo nacimiento<br/>y una nueva vida</h2><p>Discipulado CRC · Lección 01</p><div className="class-meta"><span>◷ 9:00 a. m.</span><span>4 estudiantes</span></div><button className="primary-button wide" onClick={onClass}>Registrar asistencia</button></article>
       <article className="panel quick-panel"><div className="panel-head"><div><span className="panel-kicker">ACCESOS RÁPIDOS</span><h2>¿Qué deseas hacer?</h2></div></div><div className="quick-actions"><button onClick={onPeople}><b>＋</b><span><strong>Registrar persona</strong><small>Primera visita o nuevo miembro</small></span></button><button onClick={onAttendance}><b>✓</b><span><strong>Tomar asistencia</strong><small>Culto, evento o discipulado</small></span></button><button onClick={onPeople}><b>⌕</b><span><strong>Buscar persona</strong><small>Perfil, familia y progreso</small></span></button></div></article>
-      <article className="panel alerts-panel"><div className="panel-head"><div><span className="panel-kicker">ACOMPAÑAMIENTO</span><h2>Pendientes</h2></div><button>Ver todos</button></div><div className="alert-item"><i className="alert-icon rose">!</i><div><strong>3 personas requieren seguimiento</strong><span>Ausencia o solicitud registrada</span></div><b>→</b></div><div className="alert-item"><i className="alert-icon gold">◷</i><div><strong>2 llamadas por completar</strong><span>Asignadas para esta semana</span></div><b>→</b></div><div className="alert-item"><i className="alert-icon green">✓</i><div><strong>Clase preparada</strong><span>Lección y grupo confirmados</span></div><b>→</b></div></article>
+      <article className="panel alerts-panel"><div className="panel-head"><div><span className="panel-kicker">ACOMPAÑAMIENTO</span><h2>Pendientes</h2></div><button onClick={onFollowups}>Ver todos</button></div><button className="alert-item" onClick={onFollowups}><i className="alert-icon rose">!</i><div><strong>3 personas requieren seguimiento</strong><span>Ausencia o solicitud registrada</span></div><b>→</b></button><button className="alert-item" onClick={onFollowups}><i className="alert-icon gold">◷</i><div><strong>2 llamadas por completar</strong><span>Asignadas para esta semana</span></div><b>→</b></button><button className="alert-item" onClick={onClass}><i className="alert-icon green">✓</i><div><strong>Clase preparada</strong><span>Lección y grupo confirmados</span></div><b>→</b></button></article>
     </section>
   </div>;
 }
