@@ -8,8 +8,9 @@ import { MinistriesView } from "@/features/ministries/MinistriesView";
 import { GlobalSearch } from "@/features/search/GlobalSearch";
 import { AttendanceView } from "@/features/attendance/AttendanceView";
 import { TrainingView } from "@/features/training/TrainingView";
+import { GroupsView } from "@/features/groups/GroupsView";
 
-type View = "dashboard" | "people" | "families" | "ministries" | "attendance" | "discipleship" | "training" | "access" | "public";
+type View = "dashboard" | "people" | "families" | "ministries" | "attendance" | "discipleship" | "classroom" | "training" | "access" | "public";
 type Attendance = "present" | "absent";
 type Student = { id:number; initials:string; name:string; subtitle:string; color:string; attendance:Attendance; call:boolean; visit:boolean; followup:boolean; notes:string };
 
@@ -38,7 +39,7 @@ export default function Home(){
   return <div className="app-shell">
     <aside className={`sidebar ${menuOpen?"sidebar-open":""}`}>
       <button className="brand brand-button" onClick={()=>setView("dashboard")}><div className="brand-mark">CRC</div><div><strong>CRC Conecta</strong><span>Acompañar · Formar · Crecer</span></div></button>
-      <nav aria-label="Navegación principal">{nav.map(item=><button key={item} className={(view==="dashboard"&&item==="Inicio")||(view==="people"&&item==="Personas")||(view==="families"&&item==="Familias")||(view==="ministries"&&item==="Ministerios")||(view==="attendance"&&item==="Asistencia")||(view==="discipleship"&&item==="Discipulado")||(view==="training"&&item==="Formación")||(view==="access"&&item==="Accesos")?"nav-active":""} onClick={()=>choose(item)}><span className="nav-dot"/>{item}</button>)}</nav>
+      <nav aria-label="Navegación principal">{nav.map(item=><button key={item} className={(view==="dashboard"&&item==="Inicio")||(view==="people"&&item==="Personas")||(view==="families"&&item==="Familias")||(view==="ministries"&&item==="Ministerios")||(view==="attendance"&&item==="Asistencia")||((view==="discipleship"||view==="classroom")&&item==="Discipulado")||(view==="training"&&item==="Formación")||(view==="access"&&item==="Accesos")?"nav-active":""} onClick={()=>choose(item)}><span className="nav-dot"/>{item}</button>)}</nav>
       <button className="public-link" onClick={()=>setView("public")}><span>↗</span> Ver portal público</button>
       <div className="sidebar-help"><span>?</span><div><strong>Centro de ayuda</strong><small>Guías y soporte</small></div></div>
       <div className="profile-mini"><div className="avatar avatar-dark">JP</div><div><strong>Juan Pérez</strong><span>Líder de discipulado</span></div><button aria-label="Más opciones">•••</button></div>
@@ -46,7 +47,7 @@ export default function Home(){
     <main>
       <header className="topbar"><button className="menu-button" aria-label="Abrir menú" onClick={()=>setMenuOpen(!menuOpen)}>☰</button><div className="site-picker"><span className="pin">●</span><div><small>Sede activa</small><strong>CRC Nemocón</strong></div><span>⌄</span></div><div className="top-actions"><button aria-label="Buscar" onClick={()=>setSearchOpen(true)}>⌕</button><button className="bell" aria-label="Notificaciones">♢<i>3</i></button><div className="avatar avatar-dark">JP</div></div></header>
       {view==="dashboard"
-        ? <Dashboard attendanceCount={attendanceCount} onClass={()=>setView("discipleship")} onPeople={()=>setView("people")} onAttendance={()=>setView("attendance")}/>
+        ? <Dashboard attendanceCount={attendanceCount} onClass={()=>setView("classroom")} onPeople={()=>setView("people")} onAttendance={()=>setView("attendance")}/>
         : view==="people"
           ? <PeopleView/>
           : view==="families"
@@ -57,6 +58,8 @@ export default function Home(){
                 ? <AttendanceView attendanceCount={attendanceCount} adjustAttendance={(delta)=>setAttendanceCount(current=>current+delta)}/>
                 : view==="training"
                   ? <TrainingView/>
+                : view==="discipleship"
+                  ? <GroupsView onOpenClass={()=>setView("classroom")}/>
                 : view==="access"
                   ? <AccessView/>
                   : <Discipleship students={students} present={present} activeStudent={activeStudent} saved={saved} setActiveStudent={setActiveStudent} updateStudent={updateStudent} save={()=>setSaved(true)} openLesson={()=>setLessonOpen(true)}/>}

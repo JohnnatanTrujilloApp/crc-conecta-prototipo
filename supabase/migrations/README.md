@@ -12,6 +12,8 @@ Las migraciones se aplican en orden y nunca se reescriben después de ser usadas
   asistencia sin duplicados y métricas de dashboard protegidas por RLS.
 - `20260827030000_sprint_5_training_programs_modules_lessons.sql`: programas de
   formación, módulos ordenados y lecciones con contenido y recursos.
+- `20260828010000_sprint_6_groups_enrollments_class_sessions_attendance.sql`:
+  grupos por sede, matrículas, sesiones y asistencia de clase sin duplicados.
 
 Las políticas de Sprint 2 niegan el acceso cuando no existe una asignación
 activa con el permiso y el alcance requeridos.

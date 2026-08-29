@@ -5,9 +5,9 @@ discipulado, formación y seguimiento de la Comunidad de Renovación Cristiana.
 
 ## Estado del desarrollo
 
-El proyecto completó el **Sprint 5**. La interfaz demostrativa incluye personas,
-familias, ministerios, eventos, asistencia y una biblioteca de formación con
-programas, módulos y lecciones. PostgreSQL valida permisos y alcance mediante RLS.
+El proyecto completó el **Sprint 6**. La interfaz demostrativa incluye personas,
+eventos, formación, grupos por sede, matrículas, sesiones y asistencia de clase.
+PostgreSQL valida relaciones, permisos y alcance mediante RLS.
 
 Incluido en esta base:
 
@@ -48,8 +48,8 @@ pnpm test
 
 ## Próximo sprint
 
-Sprint 6 implementará grupos, matrículas, sesiones y asistencia de clase. Antes
-de usar información real deben ejecutarse pruebas de aislamiento RLS.
+Sprint 7 implementará seguimientos, llamadas, visitas y el dashboard de
+discipulado. Antes de usar información real deben ejecutarse pruebas de RLS.
 
 ## Base técnica de Sites
 

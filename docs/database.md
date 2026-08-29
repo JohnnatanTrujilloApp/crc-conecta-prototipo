@@ -57,3 +57,10 @@ La quinta migración incorpora `training_programs`, `training_modules` y
 `lessons`. El orden es único dentro de cada nivel y los permisos de formación
 se validan contra la organización para compartir el currículo entre sedes sin
 mezclar organizaciones. Los campos de auditoría se protegen mediante triggers.
+
+## Sprint 6 implementado
+
+La sexta migración agrega grupos por sede, matrículas, sesiones y asistencia de
+clase. Las claves compuestas impiden relaciones entre sedes y los triggers
+validan que la lección pertenezca al programa del grupo y que cada asistente
+esté matriculado. La combinación sesión/persona evita registros duplicados.
