@@ -52,6 +52,8 @@ pnpm test
 Configure `.env.local`, vincule un proyecto Supabase de desarrollo, aplique las
 migraciones en orden y cargue `supabase/seed.sql`. Antes de usar información
 real deben aprobarse pruebas de aislamiento RLS con usuarios de dos sedes.
+Para habilitar la primera cuenta administrativa de desarrollo, utilice
+`supabase/bootstrap_admin.sql` reemplazando únicamente el marcador de correo.
 
 ## Base técnica de Sites
 

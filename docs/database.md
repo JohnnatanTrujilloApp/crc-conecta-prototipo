@@ -96,3 +96,10 @@ decide cada operación. El borrado se implementa como archivado lógico y una
 función expone únicamente los roles y alcances de la sesión actual. Las
 migraciones deben aplicarse primero en Supabase de desarrollo y probarse con
 usuarios de dos sedes antes de utilizar datos reales.
+
+### Activación de desarrollo
+
+El proyecto Supabase de desarrollo se inicializa con `supabase/seed.sql`. Una
+cuenta creada en Supabase Auth se habilita mediante `supabase/bootstrap_admin.sql`,
+que asigna `SUPER_ADMIN` exclusivamente sobre `CRC Demo`. El archivo es
+idempotente y no contiene correos, contraseñas ni claves de servicio.
