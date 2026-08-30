@@ -1,10 +1,15 @@
+const publicSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const publicSupabasePublishableKey =
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
 type PublicVariable =
   | "NEXT_PUBLIC_SUPABASE_URL"
   | "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY";
 
-function requirePublicVariable(name: PublicVariable): string {
-  const value = process.env[name];
-
+function requirePublicVariable(
+  name: PublicVariable,
+  value: string | undefined,
+): string {
   if (!value) {
     throw new Error(
       `Falta la variable ${name}. Copie .env.example como .env.local y configure Supabase.`,
@@ -15,14 +20,23 @@ function requirePublicVariable(name: PublicVariable): string {
 }
 
 export function isSupabaseConfigured(): boolean {
-  const url=process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key=process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-  return Boolean(url&&key&&!url.includes("example.supabase.co")&&!key.startsWith("replace-"));
+  return Boolean(
+    publicSupabaseUrl &&
+      publicSupabasePublishableKey &&
+      !publicSupabaseUrl.includes("example.supabase.co") &&
+      !publicSupabasePublishableKey.startsWith("replace-"),
+  );
 }
 
 export function getPublicSupabaseConfig() {
   return {
-    url: requirePublicVariable("NEXT_PUBLIC_SUPABASE_URL"),
-    anonKey: requirePublicVariable("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
+    url: requirePublicVariable(
+      "NEXT_PUBLIC_SUPABASE_URL",
+      publicSupabaseUrl,
+    ),
+    anonKey: requirePublicVariable(
+      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+      publicSupabasePublishableKey,
+    ),
   };
 }
