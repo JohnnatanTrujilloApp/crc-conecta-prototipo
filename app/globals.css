@@ -69,3 +69,6 @@
 
 /* Real profile states */
 .profile-tags{flex-wrap:wrap}.profile-empty{padding:13px;border-radius:8px;background:#f7f9f8;text-align:left}.profile-empty strong,.profile-empty span{display:block}.profile-empty strong{font-size:9px}.profile-empty span{margin-top:4px;color:#85928e;font-size:7px}
+
+/* Families CRUD */
+.family-crud-empty{padding:30px;text-align:center;color:#758680}.family-crud-empty strong,.family-crud-empty span{display:block}.family-crud-empty span{margin-top:5px;font-size:8px}.family-notes{margin:14px 0 0;padding:10px;border-radius:8px;background:#f7f9f8;color:#677a73;font-size:8px}.family-member-row{display:grid;grid-template-columns:1fr auto;align-items:center;border-top:1px solid #edf1ef}.family-member-row>.family-unlink{width:28px;height:28px;margin-right:4px;border:0;border-radius:50%;background:#f7e9e6;color:#a35448;font-size:15px}.family-members .family-member-row>button:first-child{border:0}.danger-button{border:1px solid #dfb9b1;border-radius:8px;background:#fff4f1;color:#a14f43;padding:10px 13px;font-size:8px;font-weight:800}.family-actions button:disabled{cursor:not-allowed;opacity:.45}.family-help{display:block;margin-top:8px;text-align:right;color:#87938f;font-size:7px}.family-primary-check{display:flex;align-items:center;gap:8px;margin:16px 0;color:#526861;font-size:9px}.family-primary-check input{width:15px;height:15px}
