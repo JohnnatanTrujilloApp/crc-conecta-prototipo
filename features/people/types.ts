@@ -13,6 +13,7 @@ export type PersonStatus = (typeof personStatuses)[number];
 
 export type Person = {
   id: string;
+  crcCode?: string;
   firstName: string;
   lastName: string;
   preferredName?: string;
@@ -22,6 +23,13 @@ export type Person = {
   siteName: string;
   status: PersonStatus;
   firstVisitDate: string;
+  baptized?: boolean;
+};
+
+export type PersonProfileDetails = {
+  family?: { id: string; name: string; memberCount: number };
+  enrollments: Array<{ id: string; program: string; group: string; progress: number; status: string }>;
+  ministries: Array<{ id: string; name: string; position: string }>;
 };
 
 export type PersonDraft = Pick<
