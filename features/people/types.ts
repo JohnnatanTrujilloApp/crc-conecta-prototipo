@@ -10,10 +10,13 @@ export const personStatuses = [
 ] as const;
 
 export type PersonStatus = (typeof personStatuses)[number];
+export type DocumentType = "CC" | "TI" | "BIRTH_CERTIFICATE";
 
 export type Person = {
   id: string;
   crcCode?: string;
+  documentType?: DocumentType;
+  documentNumber?: string;
   firstName: string;
   lastName: string;
   preferredName?: string;
@@ -35,5 +38,5 @@ export type PersonProfileDetails = {
 
 export type PersonDraft = Pick<
   Person,
-  "firstName" | "lastName" | "email" | "phone" | "siteId" | "status" | "birthDate"
+  "firstName" | "lastName" | "email" | "phone" | "siteId" | "status" | "birthDate" | "documentType" | "documentNumber"
 >;

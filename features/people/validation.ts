@@ -14,6 +14,16 @@ export function validatePersonDraft(draft: PersonDraft): PersonDraftErrors {
     errors.email = "Ingrese un correo válido.";
   }
   if (!draft.siteId) errors.siteId = "Seleccione una sede.";
+  const documentNumber=draft.documentNumber?.trim().toUpperCase()??"";
+  if(Boolean(draft.documentType)!==Boolean(documentNumber)){
+    errors.documentNumber="Seleccione el tipo y escriba el número de documento.";
+  }else if(draft.documentType==="CC"&&!/^\d{6,10}$/.test(documentNumber)){
+    errors.documentNumber="La CC debe contener entre 6 y 10 dígitos.";
+  }else if(draft.documentType==="TI"&&!/^\d{10,11}$/.test(documentNumber)){
+    errors.documentNumber="La TI debe contener entre 10 y 11 dígitos.";
+  }else if(draft.documentType==="BIRTH_CERTIFICATE"&&!/^[A-Z0-9]{8,15}$/.test(documentNumber)){
+    errors.documentNumber="El RC debe contener entre 8 y 15 caracteres alfanuméricos.";
+  }
   if (!draft.birthDate) {
     errors.birthDate = "Ingrese la fecha de nacimiento.";
   } else {
