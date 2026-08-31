@@ -14,6 +14,15 @@ export function validatePersonDraft(draft: PersonDraft): PersonDraftErrors {
     errors.email = "Ingrese un correo válido.";
   }
   if (!draft.siteId) errors.siteId = "Seleccione una sede.";
+  if (!draft.birthDate) {
+    errors.birthDate = "Ingrese la fecha de nacimiento.";
+  } else {
+    const birthDate = new Date(`${draft.birthDate}T12:00:00`);
+    const today = new Date();
+    const oldestAllowed = new Date(today.getFullYear() - 120, today.getMonth(), today.getDate());
+    if (Number.isNaN(birthDate.getTime()) || birthDate > today) errors.birthDate = "La fecha no puede estar en el futuro.";
+    else if (birthDate < oldestAllowed) errors.birthDate = "Verifique la fecha de nacimiento.";
+  }
 
   return errors;
 }

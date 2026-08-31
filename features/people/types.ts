@@ -23,6 +23,7 @@ export type Person = {
   siteName: string;
   status: PersonStatus;
   firstVisitDate: string;
+  birthDate: string;
   baptized?: boolean;
 };
 
@@ -34,5 +35,5 @@ export type PersonProfileDetails = {
 
 export type PersonDraft = Pick<
   Person,
-  "firstName" | "lastName" | "email" | "phone" | "siteId" | "status"
+  "firstName" | "lastName" | "email" | "phone" | "siteId" | "status" | "birthDate"
 >;
