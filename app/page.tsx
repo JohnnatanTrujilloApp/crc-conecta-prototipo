@@ -67,7 +67,7 @@ function Application(){
             : view==="ministries"
               ? <MinistriesView/>
               : view==="attendance"
-                ? <AttendanceView attendanceCount={attendanceCount} adjustAttendance={(delta)=>setAttendanceCount(current=>current+delta)}/>
+                ? <AttendanceView/>
                 : view==="training"
                   ? <TrainingView/>
                 : view==="discipleship"
