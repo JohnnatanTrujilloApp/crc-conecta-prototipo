@@ -24,9 +24,19 @@ export async function loadTraining(){
  return{organizationId:siteResult.data?.[0]?.organization_id??programs[0]?.organizationId??"",programs};
 }
 
+export async function canManageTraining(organizationId:string){
+ const{data,error}=await getSupabaseBrowserClient().rpc("current_user_has_org_permission",{required_permission:"training.manage",target_organization_id:organizationId});
+ if(error)throw error;
+ return data===true;
+}
+
 export async function createProgram(organizationId:string,draft:{title:string;type:string;description:string}){const{error}=await getSupabaseBrowserClient().from("training_programs").insert({organization_id:organizationId,title:draft.title.trim(),program_type:draft.type,description:draft.description.trim()||null});if(error)throw error}
 export async function createModule(program:Program,draft:{title:string;description:string}){const next=program.modules.reduce((max,item)=>Math.max(max,item.sortOrder),0)+1;const{error}=await getSupabaseBrowserClient().from("training_modules").insert({organization_id:program.organizationId,program_id:program.id,title:draft.title.trim(),description:draft.description.trim()||null,sort_order:next});if(error)throw error}
 export async function createLesson(program:Program,module:Module,draft:{title:string;description:string;biblicalText:string;centralVerse:string;content:string;duration:string}){const next=module.lessons.reduce((max,item)=>Math.max(max,item.sortOrder),0)+1;const{error}=await getSupabaseBrowserClient().from("lessons").insert({organization_id:program.organizationId,module_id:module.id,title:draft.title.trim(),description:draft.description.trim()||null,biblical_text:draft.biblicalText.trim()||null,central_verse:draft.centralVerse.trim()||null,content:draft.content.trim()||null,duration_minutes:draft.duration?Number(draft.duration):null,sort_order:next,active:true});if(error)throw error}
+export async function updateProgram(program:Program,draft:{title:string;type:string;description:string}){const{error}=await getSupabaseBrowserClient().from("training_programs").update({title:draft.title.trim(),program_type:draft.type,description:draft.description.trim()||null}).eq("id",program.id);if(error)throw error}
+export async function updateModule(module:Module,draft:{title:string;description:string}){const{error}=await getSupabaseBrowserClient().from("training_modules").update({title:draft.title.trim(),description:draft.description.trim()||null}).eq("id",module.id);if(error)throw error}
+export async function updateLesson(lesson:Lesson,draft:{title:string;description:string;biblicalText:string;centralVerse:string;content:string;duration:string}){const{error}=await getSupabaseBrowserClient().from("lessons").update({title:draft.title.trim(),description:draft.description.trim()||null,biblical_text:draft.biblicalText.trim()||null,central_verse:draft.centralVerse.trim()||null,content:draft.content.trim()||null,duration_minutes:draft.duration?Number(draft.duration):null}).eq("id",lesson.id);if(error)throw error}
+export async function updateLessonResource(resource:LessonResource,draft:{title:string;url?:string;provider?:string}){const values:Record<string,string|null>={title:draft.title.trim()};if(draft.url!==undefined){values.source_url=draft.url.trim();values.embed_provider=draft.provider?.trim()||null}const{error}=await getSupabaseBrowserClient().from("lesson_resources").update(values).eq("id",resource.id);if(error)throw error}
 
 function fileType(file:File):ResourceType{if(file.type==="application/pdf")return"PDF";if(file.type.startsWith("image/"))return"IMAGE";if(file.type.startsWith("audio/"))return"AUDIO";if(/presentation|powerpoint|officedocument\.presentation/.test(file.type)||/\.(ppt|pptx)$/i.test(file.name))return"PRESENTATION";return"FILE"}
 function safeName(name:string){return name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-zA-Z0-9._-]+/g,"-").replace(/^-+|-+$/g,"")||"archivo"}
