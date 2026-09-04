@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile,readdir } from "node:fs/promises";
 import test from "node:test";
 
 async function render(){const workerUrl=new URL("../dist/server/index.js",import.meta.url);workerUrl.searchParams.set("test",`${process.pid}-${Date.now()}`);const {default:worker}=await import(workerUrl.href);return worker.fetch(new Request("http://localhost/",{headers:{accept:"text/html"}}),{ASSETS:{fetch:async()=>new Response("Not found",{status:404})}},{waitUntil(){},passThroughOnException(){}})}
@@ -22,7 +22,9 @@ test("discipulado conecta personas, formación, grupos y avance real",async()=>{
 
 test("formación persiste programas, módulos y lecciones consumidos por discipulado",async()=>{const [view,repository]=await Promise.all([readFile(new URL("../features/training/TrainingView.tsx",import.meta.url),"utf8"),readFile(new URL("../features/training/repository.ts",import.meta.url),"utf8")]);assert.doesNotMatch(view,/Un nuevo nacimiento y una nueva vida|seedPrograms/);assert.match(view,/Biblioteca privada/);assert.match(repository,/from\("training_programs"\)\.insert/);assert.match(repository,/from\("training_modules"\)\.insert/);assert.match(repository,/from\("lessons"\)\.insert/)});
 
-test("muestra la cuenta activa y un cierre de sesión visible",async()=>{const page=await readFile(new URL("../app/page.tsx",import.meta.url),"utf8");assert.match(page,/Sesión activa/);assert.match(page,/className="logout-button"/);assert.match(page,/Cerrar sesión de/);assert.match(page,/void signOut\(\)/)});
+test("mantiene visible el cambio de usuario",async()=>{const page=await readFile(new URL("../app/page.tsx",import.meta.url),"utf8");assert.match(page,/Sesión activa/);assert.match(page,/className="logout-button"/);assert.match(page,/Cambiar usuario/);assert.match(page,/cerrar sesión de/);assert.match(page,/void signOut\(\)/)});
+
+test("el artefacto cliente conserva la conexión pública de Supabase",async()=>{const root=new URL("../dist/client/",import.meta.url);const files=await readdir(root,{recursive:true});const scripts=files.filter(file=>file.endsWith(".js"));const contents=await Promise.all(scripts.map(file=>readFile(new URL(file.replaceAll("\\","/"),root),"utf8")));assert.ok(contents.some(content=>content.includes("zzxicsaqslzyewvslvfd.supabase.co")),"La compilación cliente perdió NEXT_PUBLIC_SUPABASE_URL")});
 
 test("Formación 2.0 administra archivos y recursos interactivos",async()=>{const[view,repository,migration]=await Promise.all([readFile(new URL("../features/training/TrainingView.tsx",import.meta.url),"utf8"),readFile(new URL("../features/training/repository.ts",import.meta.url),"utf8"),readFile(new URL("../supabase/migrations/20260902020000_training_content_library.sql",import.meta.url),"utf8")]);assert.match(view,/Arrastra archivos aquí/);assert.match(view,/Video de YouTube/);assert.match(view,/ResourcePreview/);assert.match(repository,/storage\.from\(bucket\)\.upload/);assert.match(repository,/createSignedUrl/);assert.match(migration,/lesson_resources/);assert.match(migration,/training-materials/);assert.match(migration,/training\.manage/)});
 
