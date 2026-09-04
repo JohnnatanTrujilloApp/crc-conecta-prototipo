@@ -16,6 +16,7 @@ import { PublicSiteView } from "@/features/public-site/PublicSiteView";
 import { ContentView } from "@/features/content/ContentView";
 import { AuthProvider,useAuth } from "@/features/auth/AuthProvider";
 import { LoginView } from "@/features/auth/LoginView";
+import { DashboardView } from "@/features/dashboard/DashboardView";
 
 type View = "dashboard" | "people" | "families" | "ministries" | "attendance" | "discipleship" | "classroom" | "training" | "followups" | "reports" | "content" | "access" | "public";
 type Attendance = "present" | "absent";
@@ -41,6 +42,8 @@ function Application(){
   const [saved,setSaved]=useState(false);
   const [searchOpen,setSearchOpen]=useState(false);
   const [attendanceCount,setAttendanceCount]=useState(32);
+  const [activeSiteName,setActiveSiteName]=useState("Sede autorizada");
+  const [alertCount,setAlertCount]=useState(0);
   const activeEmail=session?.user.email??"Modo demostración";
   const activeInitials=session?.user.email?.slice(0,2).toUpperCase()??"CRC";
   const present=useMemo(()=>students.filter(s=>s.attendance==="present").length,[students]);
@@ -59,9 +62,9 @@ function Application(){
       <div className="profile-mini"><div className="avatar avatar-dark">{session?.user.email?.slice(0,2).toUpperCase()??"JP"}</div><div><strong>{session?.user.email??"Juan Pérez"}</strong><span>{configured?"Sesión Supabase":"Modo demostración"}</span></div><button aria-label={configured?"Cerrar sesión":"Más opciones"} onClick={()=>{if(configured)void signOut()}}>{configured?"Salir":"•••"}</button></div>
     </aside>
     <main>
-      <header className="topbar"><button className="menu-button" aria-label="Abrir menú" onClick={()=>setMenuOpen(!menuOpen)}>☰</button><div className="site-picker"><span className="pin">●</span><div><small>Sede activa</small><strong>CRC Nemocón</strong></div><span>⌄</span></div><div className="top-actions"><button aria-label="Buscar" onClick={()=>setSearchOpen(true)}>⌕</button><button className="bell" aria-label="Notificaciones">♢<i>3</i></button><div className="active-session"><div className="avatar avatar-dark">{activeInitials}</div><div className="active-session-copy"><small>Sesión activa</small><strong title={activeEmail}>{activeEmail}</strong></div></div>{configured&&session&&<button className="logout-button" onClick={()=>void signOut()} aria-label={`Cambiar usuario; cerrar sesión de ${activeEmail}`} title="Cerrar esta sesión e ingresar con otra cuenta">Cambiar usuario</button>}</div></header>
+      <header className="topbar"><button className="menu-button" aria-label="Abrir menú" onClick={()=>setMenuOpen(!menuOpen)}>☰</button><div className="site-picker"><span className="pin">●</span><div><small>Sede activa</small><strong>{activeSiteName}</strong></div></div><div className="top-actions"><button aria-label="Buscar" onClick={()=>setSearchOpen(true)}>⌕</button><button className="bell" aria-label={`${alertCount} notificaciones`} onClick={()=>setView("dashboard")}>♢{alertCount>0&&<i>{alertCount}</i>}</button><div className="active-session"><div className="avatar avatar-dark">{activeInitials}</div><div className="active-session-copy"><small>Sesión activa</small><strong title={activeEmail}>{activeEmail}</strong></div></div>{configured&&session&&<button className="logout-button" onClick={()=>void signOut()} aria-label={`Cambiar usuario; cerrar sesión de ${activeEmail}`} title="Cerrar esta sesión e ingresar con otra cuenta">Cambiar usuario</button>}</div></header>
       {view==="dashboard"
-        ? <Dashboard attendanceCount={attendanceCount} onClass={()=>setView("classroom")} onPeople={()=>setView("people")} onAttendance={()=>setView("attendance")} onFollowups={()=>setView("followups")}/>
+        ? <DashboardView onSite={setActiveSiteName} onAlerts={setAlertCount} navigate={action=>setView(action)}/>
         : view==="people"
           ? <PeopleView/>
           : view==="families"
