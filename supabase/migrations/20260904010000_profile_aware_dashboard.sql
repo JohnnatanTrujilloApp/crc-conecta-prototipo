@@ -78,7 +78,7 @@ begin
     if active_groups>0 and average_progress<100 then alerts:=alerts||jsonb_build_array(jsonb_build_object('tone','progress','title','Continúa tu formación','detail','Avance promedio: '||average_progress||'%','action','training')); end if;
   end if;
 
-  select coalesce(jsonb_agg(item order by starts_at),'[]'::jsonb) into upcoming from (
+  select coalesce(jsonb_agg(item order by start_at),'[]'::jsonb) into upcoming from (
     select jsonb_build_object('type','EVENT','title',e.title,'date',e.start_at,'detail',e.event_type) item,e.start_at
     from public.events e where e.site_id=selected_site.id and e.status in('SCHEDULED','IN_PROGRESS') and e.start_at>=now()
     order by e.start_at limit 4
