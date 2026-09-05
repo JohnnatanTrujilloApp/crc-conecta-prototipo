@@ -1,0 +1,9 @@
+import {getSupabaseBrowserClient} from "@/lib/supabase/client";
+
+export type RegistrationSite={id:string;organizationId:string;name:string;city:string;department:string};
+export type RegistrationDraft={firstName:string;lastName:string;documentType:string;documentNumber:string;birthDate:string;phone:string;country:string;department:string;city:string;address:string;maritalStatus:string;siteId:string;currentlyCongregates:boolean;baptized:boolean;discipleshipStatus:string;photoUrl:string;consent:boolean};
+export type RegistrationResult={status:"CREATED"|"LINKED"|"ALREADY_REGISTERED"|"VERIFICATION_REQUIRED";personId?:string;message:string};
+
+export async function loadRegistrationSites(){const{data,error}=await getSupabaseBrowserClient().rpc("get_public_registration_sites");if(error)throw error;return(data??[]).map((row:{id:string;organization_id:string;name:string;city:string|null;department:string|null})=>({id:row.id,organizationId:row.organization_id,name:row.name,city:row.city??"",department:row.department??""})) as RegistrationSite[]}
+
+export async function completeSelfRegistration(draft:RegistrationDraft){const{data,error}=await getSupabaseBrowserClient().rpc("complete_self_registration",{target_site_id:draft.siteId,given_first_name:draft.firstName,given_last_name:draft.lastName,given_document_type:draft.documentType,given_document_number:draft.documentNumber,given_birth_date:draft.birthDate,given_phone:draft.phone,given_country:draft.country,given_department:draft.department,given_city:draft.city,given_address:draft.address||null,given_marital_status:draft.maritalStatus,given_currently_congregates:draft.currentlyCongregates,given_baptized:draft.baptized,given_discipleship_status:draft.discipleshipStatus||null,given_photo_url:draft.photoUrl||null,accepted_data_policy:draft.consent});if(error)throw error;return data as RegistrationResult}

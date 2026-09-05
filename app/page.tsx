@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PeopleView } from "@/features/people/PeopleView";
 import { AccessView } from "@/features/access/AccessView";
 import { FamiliesView } from "@/features/families/FamiliesView";
@@ -17,8 +17,9 @@ import { ContentView } from "@/features/content/ContentView";
 import { AuthProvider,useAuth } from "@/features/auth/AuthProvider";
 import { LoginView } from "@/features/auth/LoginView";
 import { DashboardView } from "@/features/dashboard/DashboardView";
+import { RegistrationView } from "@/features/registration/RegistrationView";
 
-type View = "dashboard" | "people" | "families" | "ministries" | "attendance" | "discipleship" | "classroom" | "training" | "followups" | "reports" | "content" | "access" | "public";
+type View = "dashboard" | "people" | "families" | "ministries" | "attendance" | "discipleship" | "classroom" | "training" | "followups" | "reports" | "content" | "access" | "public" | "register";
 type Attendance = "present" | "absent";
 type Student = { id:number; initials:string; name:string; subtitle:string; color:string; attendance:Attendance; call:boolean; visit:boolean; followup:boolean; notes:string };
 
@@ -44,15 +45,18 @@ function Application(){
   const [attendanceCount,setAttendanceCount]=useState(32);
   const [activeSiteName,setActiveSiteName]=useState("Sede autorizada");
   const [alertCount,setAlertCount]=useState(0);
+  useEffect(()=>{const sync=()=>{if(window.location.pathname==="/registro")setView("register")};sync();window.addEventListener("popstate",sync);return()=>window.removeEventListener("popstate",sync)},[]);
+  const openView=(next:View,path="/")=>{window.history.pushState({},"",path);setView(next)};
   const activeEmail=session?.user.email??"Modo demostración";
   const activeInitials=session?.user.email?.slice(0,2).toUpperCase()??"CRC";
   const present=useMemo(()=>students.filter(s=>s.attendance==="present").length,[students]);
   const updateStudent=(id:number,patch:Partial<Student>)=>{setSaved(false);setStudents(current=>current.map(s=>s.id===id?{...s,...patch}:s))};
   const choose=(item:string)=>{if(item==="Inicio")setView("dashboard");if(item==="Personas")setView("people");if(item==="Familias")setView("families");if(item==="Ministerios")setView("ministries");if(item==="Asistencia")setView("attendance");if(item==="Discipulado")setView("discipleship");if(item==="Formación")setView("training");if(item==="Seguimiento")setView("followups");if(item==="Reportes")setView("reports");if(item==="Contenido")setView("content");if(item==="Accesos")setView("access");setMenuOpen(false)};
 
-  if(view==="public")return <PublicSiteView onCampus={()=>setView("dashboard")}/>;
+  if(view==="register")return <RegistrationView onPublic={()=>openView("public")} onCampus={()=>openView("dashboard")}/>;
+  if(view==="public")return <PublicSiteView onCampus={()=>openView("dashboard")} onRegister={()=>openView("register","/registro")}/>;
   if(configured&&loading)return <main className="login-page"><div className="login-card"><strong>Preparando sesión segura…</strong></div></main>;
-  if(configured&&!session)return <LoginView onPublic={()=>setView("public")}/>;
+  if(configured&&!session)return <LoginView onPublic={()=>openView("public")}/>;
   return <div className="app-shell">
     <aside className={`sidebar ${menuOpen?"sidebar-open":""}`}>
       <button className="brand brand-button" onClick={()=>setView("dashboard")}><div className="brand-mark">CRC</div><div><strong>CRC Conecta</strong><span>Acompañar · Formar · Crecer</span></div></button>
