@@ -45,7 +45,7 @@ function Application(){
   const [attendanceCount,setAttendanceCount]=useState(32);
   const [activeSiteName,setActiveSiteName]=useState("Sede autorizada");
   const [alertCount,setAlertCount]=useState(0);
-  useEffect(()=>{const sync=()=>{if(window.location.pathname==="/registro")setView("register")};sync();window.addEventListener("popstate",sync);return()=>window.removeEventListener("popstate",sync)},[]);
+  useEffect(()=>{const sync=()=>{if(new URLSearchParams(window.location.search).get("public")==="1")setView("public")};sync();window.addEventListener("popstate",sync);return()=>window.removeEventListener("popstate",sync)},[]);
   const openView=(next:View,path="/")=>{window.history.pushState({},"",path);setView(next)};
   const activeEmail=session?.user.email??"Modo demostración";
   const activeInitials=session?.user.email?.slice(0,2).toUpperCase()??"CRC";
