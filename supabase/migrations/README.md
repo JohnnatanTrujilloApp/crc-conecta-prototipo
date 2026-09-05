@@ -22,6 +22,8 @@ Las migraciones se aplican en orden y nunca se reescriben después de ser usadas
   solicitudes protegidas, permisos editoriales y políticas RLS por sede.
 - `20260829010000_sprint_10_supabase_sessions_crud.sql`: contexto de sesión,
   archivado lógico y protección adicional del CRUD de personas.
+- `20260906010000_campus_access_approval.sql`: aprobación progresiva del acceso
+  al Campus, bandeja por sede, Campus personal, notificaciones y anti-elevación.
 
 Las políticas de Sprint 2 niegan el acceso cuando no existe una asignación
 activa con el permiso y el alcance requeridos.

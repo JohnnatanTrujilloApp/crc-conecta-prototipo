@@ -18,6 +18,8 @@ import { AuthProvider,useAuth } from "@/features/auth/AuthProvider";
 import { LoginView } from "@/features/auth/LoginView";
 import { DashboardView } from "@/features/dashboard/DashboardView";
 import { RegistrationView } from "@/features/registration/RegistrationView";
+import {AccessDeniedView,AccessStatusView,CampusView} from "@/features/campus/CampusView";
+import {loadPortalContext,type PortalContext} from "@/features/access/repository";
 
 type View = "dashboard" | "people" | "families" | "ministries" | "attendance" | "discipleship" | "classroom" | "training" | "followups" | "reports" | "content" | "access" | "public" | "register";
 type Attendance = "present" | "absent";
@@ -29,7 +31,7 @@ const seedStudents:Student[]=[
   {id:3,initials:"CM",name:"Carlos Martínez",subtitle:"Progreso 50% · 5 de 10 lecciones",color:"#c9c2dd",attendance:"absent",call:false,visit:false,followup:true,notes:"Llamar para conocer cómo se encuentra."},
   {id:4,initials:"AP",name:"Ana Pérez",subtitle:"Progreso 70% · 7 de 10 lecciones",color:"#e7c8ce",attendance:"present",call:false,visit:false,followup:false,notes:""},
 ];
-const nav=["Inicio","Personas","Familias","Asistencia","Discipulado","Formación","Seguimiento","Ministerios","Reportes","Contenido","Accesos"];
+const nav=[{label:"Inicio",permission:"admin"},{label:"Personas",permission:"people.read"},{label:"Familias",permission:"families.read"},{label:"Asistencia",permission:"attendance.register"},{label:"Discipulado",permission:"groups.read"},{label:"Formación",permission:"training.manage"},{label:"Seguimiento",permission:"followups.read"},{label:"Ministerios",permission:"ministries.read"},{label:"Reportes",permission:"reports.read"},{label:"Contenido",permission:"content.manage"},{label:"Accesos",permission:"access_requests.review"}];
 
 export default function Home(){return <AuthProvider><Application/></AuthProvider>}
 
@@ -45,7 +47,9 @@ function Application(){
   const [attendanceCount,setAttendanceCount]=useState(32);
   const [activeSiteName,setActiveSiteName]=useState("Sede autorizada");
   const [alertCount,setAlertCount]=useState(0);
-  useEffect(()=>{const sync=()=>{if(new URLSearchParams(window.location.search).get("public")==="1")setView("public")};sync();window.addEventListener("popstate",sync);return()=>window.removeEventListener("popstate",sync)},[]);
+  const[portal,setPortal]=useState<PortalContext|null>(null);const[portalLoading,setPortalLoading]=useState(false);const[portalError,setPortalError]=useState("");
+  useEffect(()=>{const sync=()=>{if(new URLSearchParams(window.location.search).get("public")==="1")setView("public");else if(window.location.pathname==="/admin/personas")setView("people")};sync();window.addEventListener("popstate",sync);return()=>window.removeEventListener("popstate",sync)},[]);
+  useEffect(()=>{if(!configured||!session){setPortal(null);return}setPortalLoading(true);loadPortalContext().then(next=>{setPortal(next);setPortalError("")}).catch(()=>setPortalError("No fue posible validar el acceso. Aplica la migración de aprobación en Supabase.")).finally(()=>setPortalLoading(false))},[configured,session]);
   const openView=(next:View,path="/")=>{window.history.pushState({},"",path);setView(next)};
   const activeEmail=session?.user.email??"Modo demostración";
   const activeInitials=session?.user.email?.slice(0,2).toUpperCase()??"CRC";
@@ -57,10 +61,16 @@ function Application(){
   if(view==="public")return <PublicSiteView onCampus={()=>openView("dashboard")} onRegister={()=>openView("register","/registro")}/>;
   if(configured&&loading)return <main className="login-page"><div className="login-card"><strong>Preparando sesión segura…</strong></div></main>;
   if(configured&&!session)return <LoginView onPublic={()=>openView("public")}/>;
+  if(portalLoading||!portal)return <main className="login-page"><div className="login-card"><strong>{portalError||"Validando acceso autorizado…"}</strong></div></main>;
+  if(portal.status!=="ACTIVE")return <AccessStatusView status={portal.status} onPublic={()=>openView("public")} onSignOut={()=>void signOut()}/>;
+  const effective=new Set(portal.permissions);const isAdministrative=["people.read","families.read","attendance.register","groups.manage","training.manage","followups.read","ministries.read","reports.read","content.manage","access_requests.review","roles.manage"].some(permission=>effective.has(permission));
+  if(window.location.pathname.startsWith("/admin")&&!isAdministrative)return <AccessDeniedView onCampus={()=>window.location.assign("/campus")}/>;
+  if(!isAdministrative)return <CampusView context={portal} onSignOut={()=>void signOut()}/>;
+  const visibleNav=nav.filter(item=>item.permission==="admin"||effective.has(item.permission));
   return <div className="app-shell">
     <aside className={`sidebar ${menuOpen?"sidebar-open":""}`}>
       <button className="brand brand-button" onClick={()=>setView("dashboard")}><div className="brand-mark">CRC</div><div><strong>CRC Conecta</strong><span>Acompañar · Formar · Crecer</span></div></button>
-      <nav aria-label="Navegación principal">{nav.map(item=><button key={item} className={(view==="dashboard"&&item==="Inicio")||(view==="people"&&item==="Personas")||(view==="families"&&item==="Familias")||(view==="ministries"&&item==="Ministerios")||(view==="attendance"&&item==="Asistencia")||((view==="discipleship"||view==="classroom")&&item==="Discipulado")||(view==="training"&&item==="Formación")||(view==="followups"&&item==="Seguimiento")||(view==="reports"&&item==="Reportes")||(view==="content"&&item==="Contenido")||(view==="access"&&item==="Accesos")?"nav-active":""} onClick={()=>choose(item)}><span className="nav-dot"/>{item}</button>)}</nav>
+      <nav aria-label="Navegación principal">{visibleNav.map(item=><button key={item.label} className={(view==="dashboard"&&item.label==="Inicio")||(view==="people"&&item.label==="Personas")||(view==="families"&&item.label==="Familias")||(view==="ministries"&&item.label==="Ministerios")||(view==="attendance"&&item.label==="Asistencia")||((view==="discipleship"||view==="classroom")&&item.label==="Discipulado")||(view==="training"&&item.label==="Formación")||(view==="followups"&&item.label==="Seguimiento")||(view==="reports"&&item.label==="Reportes")||(view==="content"&&item.label==="Contenido")||(view==="access"&&item.label==="Accesos")?"nav-active":""} onClick={()=>choose(item.label)}><span className="nav-dot"/>{item.label}</button>)}</nav>
       <button className="public-link" onClick={()=>setView("public")}><span>↗</span> Ver portal público</button>
       <div className="sidebar-help"><span>?</span><div><strong>Centro de ayuda</strong><small>Guías y soporte</small></div></div>
       <div className="profile-mini"><div className="avatar avatar-dark">{session?.user.email?.slice(0,2).toUpperCase()??"JP"}</div><div><strong>{session?.user.email??"Juan Pérez"}</strong><span>{configured?"Sesión Supabase":"Modo demostración"}</span></div><button aria-label={configured?"Cerrar sesión":"Más opciones"} onClick={()=>{if(configured)void signOut()}}>{configured?"Salir":"•••"}</button></div>
