@@ -1,0 +1,13 @@
+"use client";
+
+import {useState} from "react";
+import {useAuth} from "./AuthProvider";
+
+export function PasswordRecoveryView(){
+ const{configured,loading,session,updatePassword,signOut}=useAuth();
+ const[password,setPassword]=useState("");const[confirmation,setConfirmation]=useState("");const[busy,setBusy]=useState(false);const[error,setError]=useState("");const[complete,setComplete]=useState(false);
+ const valid=password.length>=8&&password===confirmation;
+ const submit=async(event:React.FormEvent)=>{event.preventDefault();if(!valid)return;setBusy(true);setError("");const message=await updatePassword(password);if(message)setError("No fue posible actualizar la contraseña. Solicita un enlace nuevo e inténtalo nuevamente.");else{await signOut();setComplete(true)}setBusy(false)};
+ if(complete)return <main className="recovery-page"><section className="recovery-card"><span className="registration-check">✓</span><h1>Contraseña actualizada</h1><p>Ya puedes ingresar a CRC Conecta con tu correo y la contraseña nueva.</p><button className="primary-button wide" onClick={()=>window.location.assign("/")}>Ir a Campus CRC</button></section></main>;
+ return <main className="recovery-page"><section className="recovery-card"><span className="eyebrow">RECUPERAR ACCESO</span><h1>Crea una contraseña nueva</h1><p>Escribe una contraseña de mínimo 8 caracteres. Solo podrás continuar al Campus después de actualizarla.</p>{!configured&&<div className="auth-error">Supabase no está configurado.</div>}{!loading&&!session&&<div className="auth-error">El enlace es inválido o venció. Solicita uno nuevo desde la pantalla de registro.</div>}{loading&&<div className="people-success">Validando enlace seguro…</div>}<form onSubmit={submit}><label className="registration-field"><span>Nueva contraseña</span><input type="password" minLength={8} required autoComplete="new-password" value={password} onChange={event=>setPassword(event.target.value)}/></label><label className="registration-field"><span>Confirmar contraseña</span><input type="password" minLength={8} required autoComplete="new-password" value={confirmation} onChange={event=>setConfirmation(event.target.value)}/></label>{confirmation&&password!==confirmation&&<div className="auth-error">Las contraseñas no coinciden.</div>}{error&&<div className="auth-error" role="alert">{error}</div>}<button className="primary-button wide" disabled={!valid||busy||loading||!session}>{busy?"Actualizando…":"Guardar contraseña nueva"}</button></form><button className="recovery-link" onClick={()=>window.location.assign("/registro")}>Volver al registro</button></section></main>;
+}
