@@ -2,6 +2,7 @@
 import {useEffect,useState} from "react";
 import {useAuth} from "@/features/auth/AuthProvider";
 import {loadDashboard,type DashboardData} from "./repository";
+import {AgendaCarousel} from "@/features/agenda/AgendaCarousel";
 
 type Action="people"|"attendance"|"discipleship"|"training"|"followups"|"reports";
 const roleNames:Record<string,string>={SUPER_ADMIN:"Superadministrador",NATIONAL_PASTOR:"Pastor nacional",SITE_PASTOR:"Pastor de sede",SITE_ADMIN:"Administrador de sede",MINISTRY_LEADER:"Líder de ministerio",DISCIPLESHIP_COORDINATOR:"Coordinador de discipulado",DISCIPLESHIP_TEACHER:"Maestro de discipulado",COURSE_TEACHER:"Maestro de curso",USHER:"Ujier",MEMBER:"Miembro",STUDENT:"Estudiante",VISITOR:"Visitante"};
@@ -16,9 +17,10 @@ export function DashboardView({navigate,onSite,onAlerts}:{navigate:(action:Actio
  return <div className="content dashboard-content real-dashboard">
   <div className="dashboard-welcome"><div><span className="eyebrow">INICIO SEGÚN TU PERFIL</span><h1>{personal?"Tu camino en CRC":teacher?"Tus grupos y alumnos":"Actividad de la sede"}</h1><p>{data.roles.map(role=>roleNames[role]??role).join(" · ")||"Sin rol activo"}</p></div><label className="dashboard-site"><span>Sede</span><select value={data.siteId} onChange={e=>void refresh(e.target.value)} disabled={data.sites.length<2}>{data.sites.map(site=><option key={site.id} value={site.id}>{site.name}</option>)}</select></label></div>
   {error&&<div className="form-error">{error}</div>}{loading?<div className="dashboard-loading">Cargando datos autorizados…</div>:<>
+   <AgendaCarousel/>
    <section className="metric-grid">{cards.map((card,index)=><article className={`metric-card ${["green","gold","rose","blue"][index]}`} key={card.label}><span>{card.label}</span><div><strong>{card.value}</strong><i/></div><p>{card.detail}</p><small>Datos reales · {data.siteName}</small></article>)}</section>
    <section className="dashboard-grid contextual-grid"><article className="panel alerts-panel"><div className="panel-head"><div><span className="panel-kicker">PARA TI</span><h2>Notificaciones</h2></div><span>{data.alerts.length}</span></div>{data.alerts.map((alert,index)=><button className="alert-item" key={`${alert.title}-${index}`} onClick={()=>navigate(alert.action as Action)}><i className={`alert-icon ${alert.tone==="urgent"?"rose":alert.tone==="progress"?"gold":"green"}`}>!</i><div><strong>{alert.title}</strong><span>{alert.detail}</span></div><b>→</b></button>)}{!data.alerts.length&&<div className="dashboard-empty"><strong>Todo al día</strong><span>No tienes alertas pendientes para este perfil.</span></div>}</article>
     <article className="panel quick-panel"><div className="panel-head"><div><span className="panel-kicker">ACCESOS RÁPIDOS</span><h2>¿Qué deseas hacer?</h2></div></div><div className="quick-actions">{actions.filter(item=>item.show).map(item=><button key={item.action} onClick={()=>navigate(item.action)}><b>→</b><span><strong>{item.title}</strong><small>{item.detail}</small></span></button>)}</div></article>
-    <article className="panel dashboard-upcoming"><div className="panel-head"><div><span className="panel-kicker">AGENDA</span><h2>Próximos eventos</h2></div></div>{data.upcoming.map(item=><div className="upcoming-row" key={`${item.title}-${item.date}`}><time>{new Intl.DateTimeFormat("es-CO",{day:"2-digit",month:"short"}).format(new Date(item.date))}</time><div><strong>{item.title}</strong><span>{item.detail.replaceAll("_"," ")}</span></div></div>)}{!data.upcoming.length&&<div className="dashboard-empty"><strong>Sin eventos próximos</strong><span>La sede aún no tiene actividades programadas.</span></div>}</article></section>
+    </section>
   </>}</div>
 }
