@@ -13,12 +13,13 @@ export async function loadDiscipleshipData(siteId?:string){
  const client=getSupabaseBrowserClient();const siteResult=await client.rpc("get_my_discipleship_site",{preferred_site_id:siteId||null});if(siteResult.error)throw siteResult.error;
  const authorizedSite=siteResult.data as Site|null;const sites:Site[]=authorizedSite?[authorizedSite]:[];const selected=authorizedSite?.id;if(!selected)return{sites,people:[],programs:[],groups:[],enrollments:[],sessions:[]};
  const [peopleResult,programsResult,groupsResult]=await Promise.all([
-  client.from("people").select("id,site_id,first_name,last_name,crc_code").eq("site_id",selected).is("archived_at",null).order("first_name"),
+  client.rpc("list_authorized_people"),
   client.rpc("get_my_discipleship_programs",{target_site_id:selected}),
   client.from("training_groups").select("id,organization_id,site_id,program_id,name,teacher_person_id,assistant_person_id,start_date,end_date,status").eq("site_id",selected).neq("status","CANCELLED").order("start_date",{ascending:false}),
  ]);for(const result of [peopleResult,programsResult,groupsResult])if(result.error)throw result.error;
  const programs=(programsResult.data??[]) as Program[];const lessons=programs.flatMap(program=>program.lessons);
- const people:PersonOption[]=(peopleResult.data??[]).map(row=>({id:row.id,siteId:row.site_id,name:`${row.first_name} ${row.last_name}`,crcCode:row.crc_code}));
+ const peopleRows=(peopleResult.data??[]) as {id:string;site_id:string;first_name:string;last_name:string;crc_code:string}[];
+ const people:PersonOption[]=peopleRows.filter(row=>row.site_id===selected).map(row=>({id:row.id,siteId:row.site_id,name:`${row.first_name} ${row.last_name}`,crcCode:row.crc_code}));
  const personName=(id:string|null)=>people.find(item=>item.id===id)?.name??"Sin asignar";
  const groups:Group[]=(groupsResult.data??[]).map(row=>({id:row.id,organizationId:row.organization_id,siteId:row.site_id,name:row.name,programId:row.program_id,program:programs.find(item=>item.id===row.program_id)?.title??"Programa",teacherId:row.teacher_person_id,teacher:personName(row.teacher_person_id),assistantId:row.assistant_person_id,assistant:personName(row.assistant_person_id),startDate:row.start_date,endDate:row.end_date,status:row.status}));
  if(!groups.length)return{sites,people,programs,groups,enrollments:[],sessions:[]};
