@@ -90,7 +90,7 @@ function Application(){
                 : view==="training"
                   ? <TrainingView/>
                 : view==="discipleship"
-                  ? <GroupsView onOpenClass={()=>setView("classroom")}/>
+                  ? <GroupsView onOpenClass={()=>setView("classroom")} preferredSiteId={portal.siteId} lockSite={!portal.roles.some(role=>role==="SUPER_ADMIN"||role==="NATIONAL_PASTOR")}/>
                 : view==="followups"
                   ? <FollowupsView/>
                 : view==="reports"
