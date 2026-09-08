@@ -10,8 +10,8 @@ export type Session={id:string;groupId:string;lessonId:string;lesson:string;teac
 
 const one=<T>(value:T|T[]|null|undefined)=>Array.isArray(value)?value[0]:value;
 export async function loadDiscipleshipData(siteId?:string){
- const client=getSupabaseBrowserClient();const sitesResult=await client.from("sites").select("id,organization_id,name").eq("active",true).order("name");if(sitesResult.error)throw sitesResult.error;
- const sites:Site[]=(sitesResult.data??[]).map(row=>({id:row.id,organizationId:row.organization_id,name:row.name}));const selected=siteId&&sites.some(item=>item.id===siteId)?siteId:sites[0]?.id;if(!selected)return{sites,people:[],programs:[],groups:[],enrollments:[],sessions:[]};
+ const client=getSupabaseBrowserClient();const siteResult=await client.rpc("get_my_discipleship_site",{preferred_site_id:siteId||null});if(siteResult.error)throw siteResult.error;
+ const authorizedSite=siteResult.data as Site|null;const sites:Site[]=authorizedSite?[authorizedSite]:[];const selected=authorizedSite?.id;if(!selected)return{sites,people:[],programs:[],groups:[],enrollments:[],sessions:[]};
  const [peopleResult,programsResult,modulesResult,lessonsResult,groupsResult]=await Promise.all([
   client.from("people").select("id,site_id,first_name,last_name,crc_code").eq("site_id",selected).is("archived_at",null).order("first_name"),
   client.from("training_programs").select("id,organization_id,title").eq("program_type","DISCIPLESHIP").eq("active",true).order("title"),
