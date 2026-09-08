@@ -67,7 +67,7 @@ export function PeopleView() {
   const [profileLoading,setProfileLoading]=useState(false);
   const [profileError,setProfileError]=useState("");
 
-  useEffect(()=>{if(!configured||!session)return;let active=true;loadPeopleData().then(data=>{if(!active)return;setPeople(data.people);setSites(data.sites);setDraft(current=>({...current,siteId:data.sites[0]?.id??""}));setLoadError("")}).catch(error=>active&&setLoadError(`No fue posible cargar las personas autorizadas. ${describeLoadError(error)}`)).finally(()=>active&&setLoading(false));return()=>{active=false}},[configured,session]);
+  useEffect(()=>{if(!configured||!session)return;let active=true;setPeople([]);loadPeopleData().then(data=>{if(!active)return;setPeople(data.people);setSites(data.sites);setDraft(current=>({...current,siteId:data.sites[0]?.id??""}));setLoadError("")}).catch(error=>active&&setLoadError(`No fue posible cargar las personas autorizadas. ${describeLoadError(error)}`)).finally(()=>active&&setLoading(false));return()=>{active=false}},[configured,session]);
 
   useEffect(()=>{if(!configured||!session||!selectedPerson){setProfileDetails(null);setProfileError("");return}let active=true;setProfileLoading(true);setProfileDetails(null);setProfileError("");loadPersonProfile(selectedPerson.id).then(details=>active&&setProfileDetails(details)).catch(()=>active&&setProfileError("No fue posible consultar los vínculos reales de esta persona.")).finally(()=>active&&setProfileLoading(false));return()=>{active=false}},[configured,session,selectedPerson]);
 
