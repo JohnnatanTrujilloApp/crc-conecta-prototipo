@@ -2,18 +2,18 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Person,PersonDraft,PersonProfileDetails } from "./types";
 
 export type SiteOption={id:string;name:string;organizationId:string};
-type PersonRow={id:string;crc_code?:string;document_type:Person["documentType"]|null;document_number:string|null;first_name:string;last_name:string;preferred_name:string|null;email:string|null;phone:string;site_id:string;person_status:Person["status"];first_visit_date:string|null;birth_date:string|null;baptized?:boolean;sites:{name:string}|{name:string}[]|null};
-const siteName=(value:PersonRow["sites"])=>Array.isArray(value)?value[0]?.name:value?.name;
-const mapPerson=(row:PersonRow,site?:SiteOption):Person=>({id:row.id,crcCode:row.crc_code,documentType:row.document_type??undefined,documentNumber:row.document_number??undefined,firstName:row.first_name,lastName:row.last_name,preferredName:row.preferred_name??undefined,email:row.email??undefined,phone:row.phone,siteId:row.site_id,siteName:site?.name??siteName(row.sites)??"Sede autorizada",status:row.person_status,firstVisitDate:row.first_visit_date??new Date().toISOString().slice(0,10),birthDate:row.birth_date??"",baptized:row.baptized??false});
+type PersonRow={id:string;crc_code?:string;document_type:Person["documentType"]|null;document_number:string|null;first_name:string;last_name:string;preferred_name:string|null;email:string|null;phone:string;site_id:string;person_status:Person["status"];first_visit_date:string|null;birth_date:string|null;baptized?:boolean};
+const mapPerson=(row:PersonRow,site?:SiteOption):Person=>({id:row.id,crcCode:row.crc_code,documentType:row.document_type??undefined,documentNumber:row.document_number??undefined,firstName:row.first_name,lastName:row.last_name,preferredName:row.preferred_name??undefined,email:row.email??undefined,phone:row.phone,siteId:row.site_id,siteName:site?.name??"Sede autorizada",status:row.person_status,firstVisitDate:row.first_visit_date??new Date().toISOString().slice(0,10),birthDate:row.birth_date??"",baptized:row.baptized??false});
 
 export async function loadPeopleData(){
  const client=getSupabaseBrowserClient();
- const [sitesResult,peopleResult]=await Promise.all([
-  client.from("sites").select("id,name,organization_id").eq("active",true).order("name"),
-  client.from("people").select("id,crc_code,document_type,document_number,first_name,last_name,preferred_name,email,phone,site_id,person_status,first_visit_date,birth_date,baptized,sites(name)").is("archived_at",null).order("created_at",{ascending:false}),
- ]);
- if(sitesResult.error)throw sitesResult.error;if(peopleResult.error)throw peopleResult.error;
- return {sites:(sitesResult.data??[]).map(row=>({id:row.id,name:row.name,organizationId:row.organization_id})) as SiteOption[],people:((peopleResult.data??[]) as unknown as PersonRow[]).map(row=>mapPerson(row))};
+ const sitesResult=await client.from("sites").select("id,name,organization_id").eq("active",true).order("name");
+ if(sitesResult.error)throw sitesResult.error;
+ const sites=(sitesResult.data??[]).map(row=>({id:row.id,name:row.name,organizationId:row.organization_id})) as SiteOption[];
+ const peopleResult=await client.from("people").select("id,crc_code,document_type,document_number,first_name,last_name,preferred_name,email,phone,site_id,person_status,first_visit_date,birth_date,baptized").is("archived_at",null).order("created_at",{ascending:false});
+ if(peopleResult.error)throw peopleResult.error;
+ const sitesById=new Map(sites.map(site=>[site.id,site]));
+ return {sites,people:((peopleResult.data??[]) as unknown as PersonRow[]).map(row=>mapPerson(row,sitesById.get(row.site_id)))};
 }
 
 export async function createPerson(draft:PersonDraft,site:SiteOption):Promise<Person>{
