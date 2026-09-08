@@ -12,15 +12,12 @@ const one=<T>(value:T|T[]|null|undefined)=>Array.isArray(value)?value[0]:value;
 export async function loadDiscipleshipData(siteId?:string){
  const client=getSupabaseBrowserClient();const siteResult=await client.rpc("get_my_discipleship_site",{preferred_site_id:siteId||null});if(siteResult.error)throw siteResult.error;
  const authorizedSite=siteResult.data as Site|null;const sites:Site[]=authorizedSite?[authorizedSite]:[];const selected=authorizedSite?.id;if(!selected)return{sites,people:[],programs:[],groups:[],enrollments:[],sessions:[]};
- const [peopleResult,programsResult,modulesResult,lessonsResult,groupsResult]=await Promise.all([
+ const [peopleResult,programsResult,groupsResult]=await Promise.all([
   client.from("people").select("id,site_id,first_name,last_name,crc_code").eq("site_id",selected).is("archived_at",null).order("first_name"),
-  client.from("training_programs").select("id,organization_id,title").eq("program_type","DISCIPLESHIP").eq("active",true).order("title"),
-  client.from("training_modules").select("id,program_id").eq("active",true),
-  client.from("lessons").select("id,module_id,title,sort_order").eq("active",true).order("sort_order"),
+  client.rpc("get_my_discipleship_programs",{target_site_id:selected}),
   client.from("training_groups").select("id,organization_id,site_id,program_id,name,teacher_person_id,assistant_person_id,start_date,end_date,status").eq("site_id",selected).neq("status","CANCELLED").order("start_date",{ascending:false}),
- ]);for(const result of [peopleResult,programsResult,modulesResult,lessonsResult,groupsResult])if(result.error)throw result.error;
- const moduleProgram=new Map((modulesResult.data??[]).map(row=>[row.id,row.program_id]));const lessons:Lesson[]=(lessonsResult.data??[]).map(row=>({id:row.id,programId:moduleProgram.get(row.module_id)??"",title:row.title,sortOrder:row.sort_order}));
- const programs:Program[]=(programsResult.data??[]).map(row=>{const own=lessons.filter(item=>item.programId===row.id);return{id:row.id,organizationId:row.organization_id,title:row.title,lessonCount:own.length,lessons:own}});
+ ]);for(const result of [peopleResult,programsResult,groupsResult])if(result.error)throw result.error;
+ const programs=(programsResult.data??[]) as Program[];const lessons=programs.flatMap(program=>program.lessons);
  const people:PersonOption[]=(peopleResult.data??[]).map(row=>({id:row.id,siteId:row.site_id,name:`${row.first_name} ${row.last_name}`,crcCode:row.crc_code}));
  const personName=(id:string|null)=>people.find(item=>item.id===id)?.name??"Sin asignar";
  const groups:Group[]=(groupsResult.data??[]).map(row=>({id:row.id,organizationId:row.organization_id,siteId:row.site_id,name:row.name,programId:row.program_id,program:programs.find(item=>item.id===row.program_id)?.title??"Programa",teacherId:row.teacher_person_id,teacher:personName(row.teacher_person_id),assistantId:row.assistant_person_id,assistant:personName(row.assistant_person_id),startDate:row.start_date,endDate:row.end_date,status:row.status}));
