@@ -47,9 +47,9 @@ function Application(){
   const [attendanceCount,setAttendanceCount]=useState(32);
   const [activeSiteName,setActiveSiteName]=useState("Sede autorizada");
   const [alertCount,setAlertCount]=useState(0);
-  const[portal,setPortal]=useState<PortalContext|null>(null);const[portalLoading,setPortalLoading]=useState(false);const[portalError,setPortalError]=useState("");
+  const[portal,setPortal]=useState<PortalContext|null>(null);const[portalLoading,setPortalLoading]=useState(false);const[portalError,setPortalError]=useState("");const[portalAttempt,setPortalAttempt]=useState(0);
   useEffect(()=>{const sync=()=>{if(new URLSearchParams(window.location.search).get("public")==="1")setView("public");else if(window.location.pathname==="/admin/personas")setView("people")};sync();window.addEventListener("popstate",sync);return()=>window.removeEventListener("popstate",sync)},[]);
-  useEffect(()=>{if(!configured||!session){setPortal(null);return}setPortalLoading(true);loadPortalContext().then(next=>{setPortal(next);setPortalError("")}).catch(()=>setPortalError("No fue posible validar el acceso. Aplica la migración de aprobación en Supabase.")).finally(()=>setPortalLoading(false))},[configured,session]);
+  useEffect(()=>{let active=true;const timer=window.setTimeout(()=>{if(!configured||!session){if(active){setPortal(null);setPortalLoading(false)}return}setPortalLoading(true);setPortalError("");loadPortalContext().then(next=>{if(active)setPortal(next)}).catch(error=>{if(!active)return;setPortal(null);setPortalError(error instanceof Error&&error.message==="PORTAL_CONTEXT_TIMEOUT"?"La validación está tardando más de lo esperado. Revisa tu conexión y vuelve a intentarlo.":"No fue posible validar el acceso en este momento. Vuelve a intentarlo.")}).finally(()=>{if(active)setPortalLoading(false)})},0);return()=>{active=false;window.clearTimeout(timer)}},[configured,session,portalAttempt]);
   const openView=(next:View,path="/")=>{window.history.pushState({},"",path);setView(next)};
   const activeEmail=session?.user.email??"Modo demostración";
   const activeInitials=session?.user.email?.slice(0,2).toUpperCase()??"CRC";
@@ -61,7 +61,7 @@ function Application(){
   if(view==="public")return <PublicSiteView onCampus={()=>openView("dashboard")} onRegister={()=>openView("register","/registro")}/>;
   if(configured&&loading)return <main className="login-page"><div className="login-card"><strong>Preparando sesión segura…</strong></div></main>;
   if(configured&&!session)return <LoginView onPublic={()=>openView("public")}/>;
-  if(portalLoading||!portal)return <main className="login-page"><div className="login-card"><strong>{portalError||"Validando acceso autorizado…"}</strong></div></main>;
+  if(portalLoading||!portal)return <main className="login-page"><div className="login-card"><strong>{portalError||"Validando acceso autorizado…"}</strong>{portalError&&<><p>Tu sesión permanece protegida y puedes intentar nuevamente.</p><div className="login-actions"><button className="primary-button" onClick={()=>setPortalAttempt(value=>value+1)}>Reintentar</button><button className="secondary-button" onClick={()=>void signOut()}>Cerrar sesión</button><button className="secondary-button" onClick={()=>openView("public","/?public=1")}>Portal público</button></div></>}</div></main>;
   if(portal.status!=="ACTIVE")return <AccessStatusView status={portal.status} onPublic={()=>openView("public")} onSignOut={()=>void signOut()}/>;
   const effective=new Set(portal.permissions);const isAdministrative=["people.read","families.read","attendance.register","groups.manage","training.manage","followups.read","ministries.read","reports.read","content.manage","access_requests.review","roles.manage"].some(permission=>effective.has(permission));
   if(window.location.pathname.startsWith("/admin")&&!isAdministrative)return <AccessDeniedView onCampus={()=>window.location.assign("/campus")}/>;

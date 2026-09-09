@@ -1,6 +1,11 @@
 import {getSupabaseBrowserClient} from "@/lib/supabase/client";
 export type PortalContext={status:"PENDING_APPROVAL"|"ACTIVE"|"SUSPENDED"|"REJECTED"|"ARCHIVED";personId?:string;firstName?:string;lastName?:string;siteId?:string;siteName?:string;permissions:string[];roles:string[]};
 export type AccessRequest={id:string;status:string;createdAt:string;possibleDuplicate:boolean;observations:string;person:{first_name:string;last_name:string;email:string;phone:string;document_type:string;document_number:string};site:{name:string}};
-export async function loadPortalContext(){const{data,error}=await getSupabaseBrowserClient().rpc("get_my_portal_context");if(error)throw error;return data as PortalContext}
+export async function loadPortalContext(timeoutMs=12000){
+ const controller=new AbortController();const timeout=window.setTimeout(()=>controller.abort(),timeoutMs);
+ try{const{data,error}=await getSupabaseBrowserClient().rpc("get_my_portal_context").abortSignal(controller.signal);if(error)throw error;if(!data)throw new Error("PORTAL_CONTEXT_EMPTY");return data as PortalContext}
+ catch(error){if(controller.signal.aborted)throw new Error("PORTAL_CONTEXT_TIMEOUT");throw error}
+ finally{window.clearTimeout(timeout)}
+}
 export async function loadAccessRequests(){const{data,error}=await getSupabaseBrowserClient().from("access_requests").select("id,status,created_at,possible_duplicate,observations,person:people!person_id(first_name,last_name,email,phone,document_type,document_number),site:sites!site_id(name)").order("created_at",{ascending:false});if(error)throw error;return(data??[]).map((row:any)=>({id:row.id,status:row.status,createdAt:row.created_at,possibleDuplicate:row.possible_duplicate,observations:row.observations??"",person:Array.isArray(row.person)?row.person[0]:row.person,site:Array.isArray(row.site)?row.site[0]:row.site})) as AccessRequest[]}
 export async function reviewAccessRequest(id:string,decision:"APPROVE"|"REJECT"|"PENDING"|"SUSPEND",observations:string){const{error}=await getSupabaseBrowserClient().rpc("review_access_request",{target_request_id:id,decision,given_observations:observations||null});if(error)throw error}
