@@ -5,15 +5,17 @@ export type AccessRequest={id:string;status:string;createdAt:string;possibleDupl
 export async function loadPortalContext(accessToken:string,timeoutMs=12000){
  const {url,anonKey}=getPublicSupabaseConfig();
  const controller=new AbortController();
- const timeout=window.setTimeout(()=>controller.abort("PORTAL_CONTEXT_TIMEOUT"),timeoutMs);
+ let timeout=0;
  try{
-  const response=await fetch(`${url}/rest/v1/rpc/get_my_portal_context`,{method:"POST",headers:{apikey:anonKey,Authorization:`Bearer ${accessToken}`,"Content-Type":"application/json"},body:"{}",signal:controller.signal,cache:"no-store"});
+  const request=fetch(`${url}/rest/v1/rpc/get_my_portal_context`,{method:"POST",headers:{apikey:anonKey,Authorization:`Bearer ${accessToken}`,"Content-Type":"application/json"},body:"{}",signal:controller.signal,cache:"no-store"});
+  const deadline=new Promise<never>((_,reject)=>{timeout=window.setTimeout(()=>{controller.abort();reject(new Error("PORTAL_CONTEXT_TIMEOUT"))},timeoutMs)});
+  const response=await Promise.race([request,deadline]);
   if(!response.ok)throw new Error(`PORTAL_CONTEXT_HTTP_${response.status}`);
   const data=await response.json() as PortalContext|null;
   if(!data)throw new Error("PORTAL_CONTEXT_EMPTY");
   return data;
  }catch(error){
-  if(controller.signal.aborted)throw new Error("PORTAL_CONTEXT_TIMEOUT");
+  if(controller.signal.aborted||error instanceof Error&&error.message==="PORTAL_CONTEXT_TIMEOUT")throw new Error("PORTAL_CONTEXT_TIMEOUT");
   throw error;
  }finally{window.clearTimeout(timeout)}
 }
