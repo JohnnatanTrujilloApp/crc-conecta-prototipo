@@ -19,7 +19,6 @@ export async function loadPortalContext(accessToken:string,timeoutMs=12000){
   throw error;
  }finally{window.clearTimeout(timeout)}
 }
-// Supabase infers embedded relations as a generated shape unavailable in this prototype.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function loadAccessRequests(){const{data,error}=await getSupabaseBrowserClient().from("access_requests").select("id,status,created_at,possible_duplicate,observations,person:people!person_id(first_name,last_name,email,phone,document_type,document_number),site:sites!site_id(name)").order("created_at",{ascending:false});if(error)throw error;return(data??[]).map((row:any)=>({id:row.id,status:row.status,createdAt:row.created_at,possibleDuplicate:row.possible_duplicate,observations:row.observations??"",person:Array.isArray(row.person)?row.person[0]:row.person,site:Array.isArray(row.site)?row.site[0]:row.site})) as AccessRequest[]}
+type AccessRequestRow={id:string;status:string;created_at:string;possible_duplicate:boolean;observations:string;person:AccessRequest["person"];site:AccessRequest["site"]};
+export async function loadAccessRequests(){const{data,error}=await getSupabaseBrowserClient().rpc("list_authorized_access_requests");if(error)throw error;const rows=(Array.isArray(data)?data:[]) as AccessRequestRow[];return rows.map(row=>({id:row.id,status:row.status,createdAt:row.created_at,possibleDuplicate:row.possible_duplicate,observations:row.observations??"",person:row.person,site:row.site}))}
 export async function reviewAccessRequest(id:string,decision:"APPROVE"|"REJECT"|"PENDING"|"SUSPEND",observations:string){const{error}=await getSupabaseBrowserClient().rpc("review_access_request",{target_request_id:id,decision,given_observations:observations||null});if(error)throw error}
