@@ -1,6 +1,6 @@
 import {getSupabaseBrowserClient} from "@/lib/supabase/client";
 import {getPublicSupabaseConfig} from "@/lib/supabase/config";
-export type PortalContext={status:"PENDING_APPROVAL"|"ACTIVE"|"SUSPENDED"|"REJECTED"|"ARCHIVED";personId?:string;firstName?:string;lastName?:string;siteId?:string;siteName?:string;permissions:string[];roles:string[]};
+export type PortalContext={status:"PENDING_APPROVAL"|"ACTIVE"|"SUSPENDED"|"REJECTED"|"ARCHIVED";needsRegistration?:boolean;personId?:string;firstName?:string;lastName?:string;siteId?:string;siteName?:string;permissions:string[];roles:string[]};
 export type AccessRequest={id:string;status:string;createdAt:string;possibleDuplicate:boolean;observations:string;person:{first_name:string;last_name:string;email:string;phone:string;document_type:string;document_number:string};site:{name:string}};
 export async function loadPortalContext(accessToken:string,timeoutMs=12000){
  const {url,anonKey}=getPublicSupabaseConfig();
