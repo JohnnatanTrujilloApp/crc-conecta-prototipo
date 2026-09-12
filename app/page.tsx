@@ -32,6 +32,7 @@ const seedStudents:Student[]=[
   {id:4,initials:"AP",name:"Ana Pérez",subtitle:"Progreso 70% · 7 de 10 lecciones",color:"#e7c8ce",attendance:"present",call:false,visit:false,followup:false,notes:""},
 ];
 const nav=[{label:"Inicio",permission:"admin"},{label:"Personas",permission:"people.read"},{label:"Familias",permission:"families.read"},{label:"Asistencia",permission:"attendance.register"},{label:"Discipulado",permission:"groups.read"},{label:"Formación",permission:"training.manage"},{label:"Seguimiento",permission:"followups.read"},{label:"Ministerios",permission:"ministries.read"},{label:"Reportes",permission:"reports.read"},{label:"Contenido",permission:"content.manage"},{label:"Accesos",permission:"access_requests.review"}];
+const viewPermissions:Partial<Record<View,string>>={people:"people.read",families:"families.read",attendance:"attendance.register",discipleship:"groups.read",classroom:"groups.read",training:"training.manage",followups:"followups.read",ministries:"ministries.read",reports:"reports.read",content:"content.manage",access:"access_requests.review"};
 
 export default function Home(){return <AuthProvider><Application/></AuthProvider>}
 
@@ -71,12 +72,14 @@ function Application(){
   if(window.location.pathname.startsWith("/admin")&&!isAdministrative)return <AccessDeniedView onCampus={()=>window.location.assign("/campus")}/>;
   if(!isAdministrative)return <CampusView context={portal} onSignOut={()=>void signOut()}/>;
   const visibleNav=nav.filter(item=>item.permission==="admin"||effective.has(item.permission));
+  const requiredViewPermission=viewPermissions[view];
+  const effectiveView=requiredViewPermission&&!effective.has(requiredViewPermission)?"dashboard":view;
   return <div className="app-shell">
     <aside className={`sidebar ${menuOpen?"sidebar-open":""}`}>
       <button className="brand brand-button" onClick={()=>setView("dashboard")}><div className="brand-mark">CRC</div><div><strong>CRC Conecta</strong><span>Acompañar · Formar · Crecer</span></div></button>
       <div className="sidebar-nav-scroll">
         <span className="sidebar-section-label">Navegación</span>
-        <nav aria-label="Navegación principal">{visibleNav.map(item=><button key={item.label} className={(view==="dashboard"&&item.label==="Inicio")||(view==="people"&&item.label==="Personas")||(view==="families"&&item.label==="Familias")||(view==="ministries"&&item.label==="Ministerios")||(view==="attendance"&&item.label==="Asistencia")||((view==="discipleship"||view==="classroom")&&item.label==="Discipulado")||(view==="training"&&item.label==="Formación")||(view==="followups"&&item.label==="Seguimiento")||(view==="reports"&&item.label==="Reportes")||(view==="content"&&item.label==="Contenido")||(view==="access"&&item.label==="Accesos")?"nav-active":""} onClick={()=>choose(item.label)}><span className="nav-dot"/>{item.label}</button>)}</nav>
+        <nav aria-label="Navegación principal">{visibleNav.map(item=><button key={item.label} className={(effectiveView==="dashboard"&&item.label==="Inicio")||(effectiveView==="people"&&item.label==="Personas")||(effectiveView==="families"&&item.label==="Familias")||(effectiveView==="ministries"&&item.label==="Ministerios")||(effectiveView==="attendance"&&item.label==="Asistencia")||((effectiveView==="discipleship"||effectiveView==="classroom")&&item.label==="Discipulado")||(effectiveView==="training"&&item.label==="Formación")||(effectiveView==="followups"&&item.label==="Seguimiento")||(effectiveView==="reports"&&item.label==="Reportes")||(effectiveView==="content"&&item.label==="Contenido")||(effectiveView==="access"&&item.label==="Accesos")?"nav-active":""} onClick={()=>choose(item.label)}><span className="nav-dot"/>{item.label}</button>)}</nav>
       </div>
       <div className="sidebar-utilities" aria-label="Utilidades">
         <button className="public-link" onClick={()=>setView("public")}><span>↗</span><span><strong>Ver portal público</strong><small>Abrir el sitio de CRC</small></span></button>
@@ -86,27 +89,27 @@ function Application(){
     </aside>
     <main>
       <header className="topbar"><button className="menu-button" aria-label="Abrir menú" onClick={()=>setMenuOpen(!menuOpen)}>☰</button><div className="site-picker"><span className="pin">●</span><div><small>Sede activa</small><strong>{activeSiteName}</strong></div></div><div className="top-actions"><button aria-label="Buscar" onClick={()=>setSearchOpen(true)}>⌕</button><button className="bell" aria-label={`${alertCount} notificaciones`} onClick={()=>setView("dashboard")}>♢{alertCount>0&&<i>{alertCount}</i>}</button><div className="active-session"><div className="avatar avatar-dark">{activeInitials}</div><div className="active-session-copy"><small>Sesión activa</small><strong title={activeEmail}>{activeEmail}</strong></div></div>{configured&&session&&<button className="logout-button" onClick={()=>void signOut()} aria-label={`Cambiar usuario; cerrar sesión de ${activeEmail}`} title="Cerrar esta sesión e ingresar con otra cuenta">Cambiar usuario</button>}</div></header>
-      {view==="dashboard"
+      {effectiveView==="dashboard"
         ? <DashboardView onSite={setActiveSiteName} onAlerts={setAlertCount} navigate={action=>setView(action)}/>
-        : view==="people"
+        : effectiveView==="people"
           ? <PeopleView/>
-          : view==="families"
+          : effectiveView==="families"
             ? <FamiliesView onPerson={()=>setView("people")}/>
-            : view==="ministries"
+            : effectiveView==="ministries"
               ? <MinistriesView/>
-              : view==="attendance"
+              : effectiveView==="attendance"
                 ? <AttendanceView/>
-                : view==="training"
+                : effectiveView==="training"
                   ? <TrainingView/>
-                : view==="discipleship"
+                  : effectiveView==="discipleship"
                   ? <GroupsView onOpenClass={()=>setView("classroom")} preferredSiteId={portal.siteId} lockSite={!portal.roles.some(role=>role==="SUPER_ADMIN"||role==="NATIONAL_PASTOR")}/>
-                : view==="followups"
+                : effectiveView==="followups"
                   ? <FollowupsView/>
-                : view==="reports"
+                  : effectiveView==="reports"
                   ? <ReportsView/>
-                : view==="content"
+                : effectiveView==="content"
                   ? <ContentView/>
-                : view==="access"
+                  : effectiveView==="access"
                   ? <AccessView/>
                   : <Discipleship students={students} present={present} activeStudent={activeStudent} saved={saved} setActiveStudent={setActiveStudent} updateStudent={updateStudent} save={()=>setSaved(true)} openLesson={()=>setLessonOpen(true)}/>}
     </main>
