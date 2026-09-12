@@ -1,6 +1,8 @@
 import{getSupabaseBrowserClient}from"@/lib/supabase/client";
-export type PersonalLesson={id:string;title:string;module:string;completed:boolean;deliveredOn:string|null;deliveredBy:string|null};
+export type PersonalLessonResource={id:string;title:string;type:"FILE"|"PDF"|"PRESENTATION"|"IMAGE"|"AUDIO"|"LINK"|"YOUTUBE";sourceUrl:string|null;storagePath:string|null;mimeType:string|null};
+export type PersonalLesson={id:string;title:string;module:string;completed:boolean;deliveredOn:string|null;deliveredBy:string|null;resources:PersonalLessonResource[]};
 export type PersonalDiscipleship={id:string;program:string;programDescription:string|null;discipler:string;site:string;status:string;assignedAt:string;completed:number;total:number;progress:number;lastLessonAt:string|null;lessons:PersonalLesson[]};
 export type PersonalCampusData={profile:{firstName:string;lastName:string;email:string|null;phone:string|null;city:string|null;crcCode:string|null;site:string};discipleships:PersonalDiscipleship[]};
 export type PersonalEvent={id:string;title:string;description:string|null;start_at:string;end_at:string|null;modality:string;location:string|null;site_name:string};
 export async function loadPersonalCampus(){const client=getSupabaseBrowserClient();const[{data:campus,error:campusError},{data:events,error:eventsError}]=await Promise.all([client.rpc("get_my_personal_campus"),client.rpc("get_my_upcoming_events",{result_limit:12})]);if(campusError)throw campusError;if(eventsError)throw eventsError;return{campus:campus as PersonalCampusData,events:(events??[])as PersonalEvent[]}}
+export async function getPersonalLessonResourceUrl(resource:PersonalLessonResource){if(resource.sourceUrl)return resource.sourceUrl;if(!resource.storagePath)throw new Error("MATERIAL_NOT_AVAILABLE");const{data,error}=await getSupabaseBrowserClient().storage.from("training-materials").createSignedUrl(resource.storagePath,900);if(error)throw error;return data.signedUrl}
