@@ -3,7 +3,7 @@ import {getSupabaseBrowserClient} from "@/lib/supabase/client";
 export type Site={id:string;organizationId:string;name:string};
 export type PersonOption={id:string;siteId:string;name:string;crcCode:string;phone:string;documentNumber:string};
 export type DiscipleshipCandidate={id:string;name:string;crcCode:string;siteId:string;siteName:string;phoneMasked:string|null;documentMasked:string|null};
-export type Program={id:string;organizationId:string;title:string;lessonCount:number;lessons:Lesson[]};
+export type Program={id:string;organizationId:string;title:string;programType?:"DISCIPLESHIP"|"COURSE"|"SCHOOL"|"SEMINAR"|"DIPLOMA"|"WORKSHOP";lessonCount:number;lessons:Lesson[]};
 export type Lesson={id:string;programId:string;title:string;sortOrder:number};
 export type Group={id:string;organizationId:string;siteId:string;name:string;programId:string;program:string;teacherId:string;teacher:string;assistantId:string|null;assistant:string;startDate:string;endDate:string|null;status:string};
 export type Enrollment={id:string;groupId:string;personId:string;name:string;crcCode:string;status:string;progress:number;completed:number;total:number};
