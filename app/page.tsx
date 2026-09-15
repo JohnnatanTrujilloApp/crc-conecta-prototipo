@@ -6,6 +6,7 @@ import { PeopleView } from "@/features/people/PeopleView";
 import { AccessView } from "@/features/access/AccessView";
 import { FamiliesView } from "@/features/families/FamiliesView";
 import { MinistriesView } from "@/features/ministries/MinistriesView";
+import { WorshipView } from "@/features/worship/WorshipView";
 import { GlobalSearch } from "@/features/search/GlobalSearch";
 import { AttendanceView } from "@/features/attendance/AttendanceView";
 import { TrainingView } from "@/features/training/TrainingView";
@@ -21,7 +22,7 @@ import { RegistrationView } from "@/features/registration/RegistrationView";
 import {AccessDeniedView,AccessStatusView,CampusView} from "@/features/campus/CampusView";
 import {loadPortalContext,type PortalContext} from "@/features/access/repository";
 
-type View = "dashboard" | "people" | "families" | "ministries" | "attendance" | "discipleship" | "classroom" | "training" | "followups" | "reports" | "content" | "access" | "public" | "register";
+type View = "dashboard" | "people" | "families" | "ministries" | "worship" | "attendance" | "discipleship" | "classroom" | "training" | "followups" | "reports" | "content" | "access" | "public" | "register";
 type Attendance = "present" | "absent";
 type Student = { id:number; initials:string; name:string; subtitle:string; color:string; attendance:Attendance; call:boolean; visit:boolean; followup:boolean; notes:string };
 
@@ -31,8 +32,8 @@ const seedStudents:Student[]=[
   {id:3,initials:"CM",name:"Carlos Martínez",subtitle:"Progreso 50% · 5 de 10 lecciones",color:"#c9c2dd",attendance:"absent",call:false,visit:false,followup:true,notes:"Llamar para conocer cómo se encuentra."},
   {id:4,initials:"AP",name:"Ana Pérez",subtitle:"Progreso 70% · 7 de 10 lecciones",color:"#e7c8ce",attendance:"present",call:false,visit:false,followup:false,notes:""},
 ];
-const nav=[{label:"Inicio",permission:"admin"},{label:"Personas",permission:"people.read"},{label:"Familias",permission:"families.read"},{label:"Asistencia",permission:"attendance.register"},{label:"Discipulado",permission:"groups.read"},{label:"Formación",permission:"training.manage"},{label:"Seguimiento",permission:"followups.read"},{label:"Ministerios",permission:"ministries.read"},{label:"Reportes",permission:"reports.read"},{label:"Contenido",permission:"content.manage"},{label:"Accesos",permission:"access_requests.review"}];
-const viewPermissions:Partial<Record<View,string>>={people:"people.read",families:"families.read",attendance:"attendance.register",discipleship:"groups.read",classroom:"groups.read",training:"training.manage",followups:"followups.read",ministries:"ministries.read",reports:"reports.read",content:"content.manage",access:"access_requests.review"};
+const nav=[{label:"Inicio",permission:"admin"},{label:"Personas",permission:"people.read"},{label:"Familias",permission:"families.read"},{label:"Asistencia",permission:"attendance.register"},{label:"Discipulado",permission:"groups.read"},{label:"Alabanza",permission:"worship.view_team"},{label:"Formación",permission:"training.manage"},{label:"Seguimiento",permission:"followups.read"},{label:"Ministerios",permission:"ministries.read"},{label:"Reportes",permission:"reports.read"},{label:"Contenido",permission:"content.manage"},{label:"Accesos",permission:"access_requests.review"}];
+const viewPermissions:Partial<Record<View,string>>={people:"people.read",families:"families.read",attendance:"attendance.register",discipleship:"groups.read",classroom:"groups.read",worship:"worship.view_team",training:"training.manage",followups:"followups.read",ministries:"ministries.read",reports:"reports.read",content:"content.manage",access:"access_requests.review"};
 
 export default function Home(){return <AuthProvider><Application/></AuthProvider>}
 
@@ -58,7 +59,7 @@ function Application(){
   const activeInitials=session?.user.email?.slice(0,2).toUpperCase()??"CRC";
   const present=useMemo(()=>students.filter(s=>s.attendance==="present").length,[students]);
   const updateStudent=(id:number,patch:Partial<Student>)=>{setSaved(false);setStudents(current=>current.map(s=>s.id===id?{...s,...patch}:s))};
-  const choose=(item:string)=>{if(item==="Inicio")setView("dashboard");if(item==="Personas")setView("people");if(item==="Familias")setView("families");if(item==="Ministerios")setView("ministries");if(item==="Asistencia")setView("attendance");if(item==="Discipulado")setView("discipleship");if(item==="Formación")setView("training");if(item==="Seguimiento")setView("followups");if(item==="Reportes")setView("reports");if(item==="Contenido")setView("content");if(item==="Accesos")setView("access");setMenuOpen(false)};
+  const choose=(item:string)=>{if(item==="Inicio")setView("dashboard");if(item==="Personas")setView("people");if(item==="Familias")setView("families");if(item==="Ministerios")setView("ministries");if(item==="Alabanza")setView("worship");if(item==="Asistencia")setView("attendance");if(item==="Discipulado")setView("discipleship");if(item==="Formación")setView("training");if(item==="Seguimiento")setView("followups");if(item==="Reportes")setView("reports");if(item==="Contenido")setView("content");if(item==="Accesos")setView("access");setMenuOpen(false)};
 
   if(view==="register")return <RegistrationView onPublic={()=>openView("public")} onCampus={()=>openView("dashboard")}/>;
   if(view==="public")return <PublicSiteView onCampus={()=>openView("dashboard")} onRegister={()=>openView("register","/registro")}/>;
@@ -68,7 +69,7 @@ function Application(){
   if(portalLoading||!portal)return <main className="login-page"><div className="login-card"><strong>{portalError||"Validando acceso autorizado…"}</strong><p>{portalError?"La consulta no respondió, pero tu sesión permanece protegida.":"La validación finalizará automáticamente en pocos segundos."}</p><div className="login-actions"><button className="primary-button" onClick={()=>{setPortal(null);setPortalError("");setPortalAttempt(attempt=>attempt+1)}}>{portalLoading?"Reiniciar validación":"Reintentar"}</button><button className="secondary-button" onClick={()=>{void signOut();window.location.replace("/")}}>Cerrar sesión</button><button className="secondary-button" onClick={()=>openView("public","/?public=1")}>Portal público</button></div></div></main>;
   if(portal.needsRegistration)return <RegistrationView onPublic={()=>openView("public","/?public=1")} onCampus={()=>window.location.assign("/")}/>;
   if(portal.status!=="ACTIVE")return <AccessStatusView status={portal.status} onPublic={()=>openView("public")} onSignOut={()=>void signOut()}/>;
-  const effective=new Set(portal.permissions);const isAdministrative=["people.read","families.read","attendance.register","groups.manage","training.manage","followups.read","ministries.read","reports.read","content.manage","access_requests.review","roles.manage"].some(permission=>effective.has(permission));
+  const effective=new Set(portal.permissions);const isAdministrative=["people.read","families.read","attendance.register","groups.manage","worship.view_team","training.manage","followups.read","ministries.read","reports.read","content.manage","access_requests.review","roles.manage"].some(permission=>effective.has(permission));
   if(window.location.pathname.startsWith("/admin")&&!isAdministrative)return <AccessDeniedView onCampus={()=>window.location.assign("/campus")}/>;
   if(!isAdministrative)return <CampusView context={portal} onSignOut={()=>void signOut()}/>;
   const visibleNav=nav.filter(item=>item.permission==="admin"||effective.has(item.permission));
@@ -79,7 +80,7 @@ function Application(){
       <button className="brand brand-button" onClick={()=>setView("dashboard")}><div className="brand-mark">CRC</div><div><strong>CRC Conecta</strong><span>Acompañar · Formar · Crecer</span></div></button>
       <div className="sidebar-nav-scroll">
         <span className="sidebar-section-label">Navegación</span>
-        <nav aria-label="Navegación principal">{visibleNav.map(item=><button key={item.label} className={(effectiveView==="dashboard"&&item.label==="Inicio")||(effectiveView==="people"&&item.label==="Personas")||(effectiveView==="families"&&item.label==="Familias")||(effectiveView==="ministries"&&item.label==="Ministerios")||(effectiveView==="attendance"&&item.label==="Asistencia")||((effectiveView==="discipleship"||effectiveView==="classroom")&&item.label==="Discipulado")||(effectiveView==="training"&&item.label==="Formación")||(effectiveView==="followups"&&item.label==="Seguimiento")||(effectiveView==="reports"&&item.label==="Reportes")||(effectiveView==="content"&&item.label==="Contenido")||(effectiveView==="access"&&item.label==="Accesos")?"nav-active":""} onClick={()=>choose(item.label)}><span className="nav-dot"/>{item.label}</button>)}</nav>
+        <nav aria-label="Navegación principal">{visibleNav.map(item=><button key={item.label} className={(effectiveView==="dashboard"&&item.label==="Inicio")||(effectiveView==="people"&&item.label==="Personas")||(effectiveView==="families"&&item.label==="Familias")||(effectiveView==="ministries"&&item.label==="Ministerios")||(effectiveView==="worship"&&item.label==="Alabanza")||(effectiveView==="attendance"&&item.label==="Asistencia")||((effectiveView==="discipleship"||effectiveView==="classroom")&&item.label==="Discipulado")||(effectiveView==="training"&&item.label==="Formación")||(effectiveView==="followups"&&item.label==="Seguimiento")||(effectiveView==="reports"&&item.label==="Reportes")||(effectiveView==="content"&&item.label==="Contenido")||(effectiveView==="access"&&item.label==="Accesos")?"nav-active":""} onClick={()=>choose(item.label)}><span className="nav-dot"/>{item.label}</button>)}</nav>
       </div>
       <div className="sidebar-utilities" aria-label="Utilidades">
         <button className="public-link" onClick={()=>setView("public")}><span>↗</span><span><strong>Ver portal público</strong><small>Abrir el sitio de CRC</small></span></button>
@@ -97,6 +98,8 @@ function Application(){
             ? <FamiliesView onPerson={()=>setView("people")}/>
             : effectiveView==="ministries"
               ? <MinistriesView/>
+              : effectiveView==="worship"
+                ? <WorshipView/>
               : effectiveView==="attendance"
                 ? <AttendanceView/>
                 : effectiveView==="training"
