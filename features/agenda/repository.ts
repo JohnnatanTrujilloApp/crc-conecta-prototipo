@@ -1,19 +1,15 @@
 import {getSupabaseBrowserClient} from "@/lib/supabase/client";
 
-export type AgendaEvent={
- id:string;title:string;description:string|null;start_at:string;end_at:string|null;timezone:string;
- banner_url:string|null;modality:"IN_PERSON"|"ONLINE"|"HYBRID";location:string|null;event_type:string;
- is_featured:boolean;site_id:string;site_name:string;ministry_name:string|null;organizer_name:string|null;
-};
-
-export async function loadUpcomingEvents(limit=12){
- const{data,error}=await getSupabaseBrowserClient().rpc("get_my_upcoming_events",{result_limit:limit});
- if(error)throw error;
- return(data??[])as AgendaEvent[];
-}
-
-export async function loadVisibleEvent(eventId:string){
- const{data,error}=await getSupabaseBrowserClient().rpc("get_visible_event",{target_event_id:eventId});
- if(error)throw error;
- return(data??null)as AgendaEvent|null;
-}
+export type AgendaAudience={type:string;label?:string;id?:string};
+export type AgendaEvent={id:string;title:string;description:string|null;start_at:string;end_at:string|null;timezone:string;banner_url:string|null;modality:"IN_PERSON"|"ONLINE"|"HYBRID";location:string|null;virtual_url:string|null;additional_info:string|null;event_type:string;status:string;is_featured:boolean;site_id:string;site_name:string;ministry_id:string|null;ministry_name:string|null;organizer_name:string|null;can_manage:boolean;can_archive?:boolean;audience_labels:string[];created_at?:string;updated_at?:string;creator_name?:string;archived_at?:string|null;cancelled_at?:string|null;cancellation_reason?:string|null;audiences?:AgendaAudience[]};
+export type EventManagementContext={canCreate:boolean;canPublish:boolean;canViewHistory:boolean;canManageNational:boolean;canManageSite:boolean;sites:{id:string;name:string}[];ministries:{id:string;siteId:string;name:string;mine:boolean}[];roles:{id:string;code:string;name:string}[]};
+export type EventDraft={id?:string;siteId:string;ministryId:string;eventType:string;title:string;description:string;bannerUrl:string;startAt:string;endAt:string;modality:"IN_PERSON"|"ONLINE"|"HYBRID";location:string;virtualUrl:string;additionalInfo:string;audiences:AgendaAudience[];publish:boolean};
+export type HistoryFilters={from?:string;to?:string;siteId?:string;ministryId?:string;status?:string;creator?:string};
+const client=()=>getSupabaseBrowserClient();
+export async function loadUpcomingEvents(limit=12){const{data,error}=await client().rpc("get_my_upcoming_events",{result_limit:limit});if(error)throw error;return(data??[])as AgendaEvent[]}
+export async function loadVisibleEvent(eventId:string){const{data,error}=await client().rpc("get_visible_event",{target_event_id:eventId});if(error)throw error;return(data??null)as AgendaEvent|null}
+export async function loadEventManagementContext(){const{data,error}=await client().rpc("get_my_event_management_context");if(error)throw error;return data as EventManagementContext}
+export async function saveEvent(draft:EventDraft){const{data,error}=await client().rpc("save_authorized_event",{target_event_id:draft.id??null,given_site_id:draft.siteId,given_ministry_id:draft.ministryId||null,given_event_type:draft.eventType,given_title:draft.title,given_description:draft.description,given_banner_url:draft.bannerUrl,given_start_at:new Date(draft.startAt).toISOString(),given_end_at:new Date(draft.endAt).toISOString(),given_modality:draft.modality,given_location:draft.location,given_virtual_url:draft.virtualUrl,given_additional_info:draft.additionalInfo,given_audiences:draft.audiences,publish_now:draft.publish});if(error)throw error;return data as string}
+export async function cancelEvent(eventId:string,reason:string){const{error}=await client().rpc("cancel_authorized_event",{target_event_id:eventId,given_reason:reason||null});if(error)throw error}
+export async function archiveEvent(eventId:string){const{error}=await client().rpc("archive_authorized_event",{target_event_id:eventId});if(error)throw error}
+export async function loadEventHistory(filters:HistoryFilters){const{data,error}=await client().rpc("get_authorized_event_history",{history_filters:filters,result_limit:150});if(error)throw error;return(data??[])as AgendaEvent[]}
