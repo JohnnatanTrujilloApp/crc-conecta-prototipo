@@ -7,6 +7,7 @@ import { AccessView } from "@/features/access/AccessView";
 import { FamiliesView } from "@/features/families/FamiliesView";
 import { MinistriesView } from "@/features/ministries/MinistriesView";
 import { WorshipView } from "@/features/worship/WorshipView";
+import { WorshipExportButton } from "@/features/worship/WorshipExportButton";
 import { GlobalSearch } from "@/features/search/GlobalSearch";
 import { AttendanceView } from "@/features/attendance/AttendanceView";
 import { TrainingView } from "@/features/training/TrainingView";
@@ -99,7 +100,7 @@ function Application(){
             : effectiveView==="ministries"
               ? <MinistriesView/>
               : effectiveView==="worship"
-                ? <WorshipView/>
+                ? <><WorshipExportButton/><WorshipView/></>
               : effectiveView==="attendance"
                 ? <AttendanceView/>
                 : effectiveView==="training"
