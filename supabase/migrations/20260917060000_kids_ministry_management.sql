@@ -49,22 +49,22 @@ language sql stable security definer set search_path='' as $$
 $$;
 
 -- Enlace de datos para la nueva identidad de prueba; las reglas no dependen del correo.
-do $$ declare target record; auth_id uuid; person_id uuid; leader_role uuid;
+do $$ declare target record; auth_id uuid; target_person_id uuid; leader_role uuid;
 begin
  select m.organization_id,m.site_id,m.id ministry_id into target from public.ministries m where m.active and lower(trim(m.name)) in('kids','crc kids','ministerio kids','ministerio de niños') and exists(select 1 from public.sites s where s.id=m.site_id and(lower(s.name) like '%nemocón%' or lower(s.slug) like '%nemocon%')) order by m.created_at limit 1;
  select id into auth_id from auth.users where lower(trim(email))='johnnatan.trujillo+kids2@gmail.com' limit 1;
  if target.ministry_id is not null and auth_id is not null then
-  select ua.person_id into person_id from public.user_accounts ua where ua.id=auth_id;
-  if person_id is null then
-   select p.id into person_id from public.people p where p.organization_id=target.organization_id and lower(trim(p.email))='johnnatan.trujillo+kids2@gmail.com' limit 1;
+  select ua.person_id into target_person_id from public.user_accounts ua where ua.id=auth_id;
+  if target_person_id is null then
+   select p.id into target_person_id from public.people p where p.organization_id=target.organization_id and lower(trim(p.email))='johnnatan.trujillo+kids2@gmail.com' limit 1;
   end if;
-  if person_id is null then insert into public.people(organization_id,site_id,first_name,last_name,email,phone,person_status,first_visit_date) values(target.organization_id,target.site_id,'Líder','Kids','johnnatan.trujillo+kids2@gmail.com',null,'LEADER',current_date) returning id into person_id; end if;
-  insert into public.user_accounts(id,person_id) values(auth_id,person_id) on conflict(id) do update set person_id=excluded.person_id;
+  if target_person_id is null then insert into public.people(organization_id,site_id,first_name,last_name,email,phone,person_status,first_visit_date) values(target.organization_id,target.site_id,'Líder','Kids','johnnatan.trujillo+kids2@gmail.com',null,'LEADER',current_date) returning id into target_person_id; end if;
+  insert into public.user_accounts(id,person_id) values(auth_id,target_person_id) on conflict(id) do update set person_id=excluded.person_id;
   update public.user_accounts set access_status='ACTIVE',requested_site_id=target.site_id where id=auth_id;
   select id into leader_role from public.roles where code='MINISTRY_LEADER' and active;
   insert into public.user_roles(user_account_id,role_id,organization_id,scope_type,site_id,active) values(auth_id,leader_role,target.organization_id,'SITE',target.site_id,true) on conflict do nothing;
-  insert into public.person_ministries(organization_id,site_id,person_id,ministry_id,position,active) values(target.organization_id,target.site_id,person_id,target.ministry_id,'Líder de Kids',true) on conflict(person_id,ministry_id,start_date) do update set active=true,end_date=null,position=excluded.position;
-  update public.ministries set leader_person_id=person_id where id=target.ministry_id;
+  insert into public.person_ministries(organization_id,site_id,person_id,ministry_id,position,active) values(target.organization_id,target.site_id,target_person_id,target.ministry_id,'Líder de Kids',true) on conflict(person_id,ministry_id,start_date) do update set active=true,end_date=null,position=excluded.position;
+  update public.ministries set leader_person_id=target_person_id where id=target.ministry_id;
  end if;
 end $$;
 
