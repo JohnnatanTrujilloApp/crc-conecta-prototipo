@@ -9,7 +9,7 @@ export type ChildDraft={existingPersonId?:string;firstName?:string;lastName?:str
 
 const rpc=async<T>(name:string,args:Record<string,unknown>={})=>{const{data,error}=await getSupabaseBrowserClient().rpc(name,args);if(error)throw error;return data as T};
 export const loadKidsContext=()=>rpc<KidsContext>("get_my_kids_context");
-export const searchKidsPeople=(term:string)=>rpc<PersonOption[]>("search_kids_people",{search_term:term,result_limit:20});
+export const searchKidsPeople=(term:string,includeGuardianMatches=true)=>rpc<PersonOption[]>("search_kids_people",{search_term:term,result_limit:20,include_guardian_matches:includeGuardianMatches});
 export const saveKidsChild=(draft:ChildDraft)=>rpc<string>("save_kids_child",{payload:draft});
 export const inactivateKidsChild=(personId:string)=>rpc<void>("inactivate_kids_child",{target_person_id:personId});
 export const createKidsSession=(date:string,time:string)=>rpc<string>("create_kids_sunday_session",{session_date:date,start_time:time});
