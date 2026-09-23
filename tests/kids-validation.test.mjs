@@ -7,6 +7,7 @@ const source=await readFile(new URL("../features/kids/validation.ts",import.meta
 const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
 const {validateKidsBirthDate}=await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 const migration=await readFile(new URL("../supabase/migrations/20260922160000_validate_kids_age_guardians.sql",import.meta.url),"utf8");
+const incrementalMigration=await readFile(new URL("../supabase/migrations/20260923010000_validate_new_kids_birth_before_insert.sql",import.meta.url),"utf8");
 const modal=await readFile(new URL("../features/kids/KidsChildModal.tsx",import.meta.url),"utf8");
 
 test("Kids compara fechas civiles, incluyendo el límite exacto de 18 años",()=>{
@@ -45,8 +46,25 @@ test("familias ambiguas se rechazan y los parentescos existentes se preservan",(
 test("el formulario muestra adultos hallados pero bloquea el guardado y protege relaciones",()=>{
  assert.match(modal,/results\.map\(row=>/);
  assert.match(modal,/const birthError=validateKidsBirthDate/);
- assert.match(modal,/disabled=\{busy\|\|linkLoading\|\|linkError\|\|Boolean\(birthError\)/);
+ assert.match(modal,/disabled=\{busy\|\|linkLoading\|\|linkPending\|\|linkError\|\|Boolean\(birthError\)/);
  assert.match(modal,/Esta relación ya está registrada en la familia y no será modificada desde Kids/);
  assert.match(modal,/needsRelationship&&<label/);
  assert.match(modal,/<option value="">Selecciona el parentesco<\/option>/);
+});
+
+test("Kids valida la fecha de una persona nueva antes de insertarla y conserva la segunda validación",()=>{
+ const insert=incrementalMigration.indexOf("insert into public.people");
+ assert.ok(incrementalMigration.indexOf("new_birth_date:=trim(payload->>'birthDate')::date")<insert);
+ assert.ok(incrementalMigration.indexOf("if new_birth_date>current_date")<insert);
+ assert.ok(incrementalMigration.indexOf("if new_birth_date<=(current_date-interval '18 years')::date")<insert);
+ assert.ok(incrementalMigration.indexOf("if birth_date is null then raise exception 'KIDS_BIRTH_DATE_REQUIRED'")>insert);
+ assert.match(incrementalMigration,/exception when invalid_datetime_format or datetime_field_overflow/);
+ assert.equal((incrementalMigration.match(/create or replace function/g)??[]).length,1);
+});
+
+test("Kids no muestra el selector antes de conocer el parentesco existente",()=>{
+ assert.match(modal,/const linkPending=Boolean\(selectedChild&&selectedGuardian&&!guardianLink\)/);
+ assert.match(modal,/const needsRelationship=hasGuardian&&!existingRelationship&&!linkLoading&&!linkPending/);
+ assert.match(modal,/linkPending&&!linkError&&<p className="kids-search-status">Consultando relación familiar/);
+ assert.match(modal,/disabled=\{busy\|\|linkLoading\|\|linkPending\|\|linkError/);
 });
