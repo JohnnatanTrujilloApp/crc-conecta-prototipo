@@ -33,10 +33,21 @@ export async function loadPersonProfile(personId:string):Promise<PersonProfileDe
  const [familyResult,enrollmentsResult,ministriesResult]=await Promise.all([
   client.from("family_members").select("family_id,families(id,name)").eq("person_id",personId).limit(1).maybeSingle(),
   client.from("enrollments").select("id,progress_percentage,status,training_programs(title),training_groups(name)").eq("person_id",personId).order("created_at",{ascending:false}),
-  client.from("person_ministries").select("id,position,ministries(name)").eq("person_id",personId).eq("active",true).order("created_at",{ascending:false}),
+  client.from("person_ministries").select("id,ministry_id,position,is_leader,start_date,end_date,ministries(name,leader_person_id)").eq("person_id",personId).eq("active",true).order("created_at",{ascending:false}),
  ]);
  if(familyResult.error)throw familyResult.error;if(enrollmentsResult.error)throw enrollmentsResult.error;if(ministriesResult.error)throw ministriesResult.error;
  let family:PersonProfileDetails["family"];
  if(familyResult.data?.family_id){const {count,error}=await client.from("family_members").select("id",{count:"exact",head:true}).eq("family_id",familyResult.data.family_id);if(error)throw error;family={id:familyResult.data.family_id,name:relatedName(familyResult.data.families,"name")||"Familia sin nombre",memberCount:count??0};}
- return {family,enrollments:(enrollmentsResult.data??[]).map(row=>({id:row.id,program:relatedName(row.training_programs,"title")||"Programa",group:relatedName(row.training_groups,"name")||"Grupo",progress:Number(row.progress_percentage),status:row.status})),ministries:(ministriesResult.data??[]).map(row=>({id:row.id,name:relatedName(row.ministries,"name")||"Ministerio",position:row.position}))};
+ const today=new Date().toISOString().slice(0,10);
+ return {family,enrollments:(enrollmentsResult.data??[]).map(row=>({id:row.id,program:relatedName(row.training_programs,"title")||"Programa",group:relatedName(row.training_groups,"name")||"Grupo",progress:Number(row.progress_percentage),status:row.status})),ministries:(ministriesResult.data??[]).map(row=>({id:row.id,ministryId:row.ministry_id,name:relatedName(row.ministries,"name")||"Ministerio",position:row.position,isLeader:row.is_leader,isPrimary:relatedName(row.ministries,"leader_person_id")===personId,current:row.start_date<=today&&(!row.end_date||row.end_date>=today)}))};
+}
+
+export async function canManageMinistryLeadership(site:SiteOption):Promise<boolean>{
+ const {data,error}=await getSupabaseBrowserClient().rpc("current_user_has_permission",{required_permission:"ministries.manage_leadership",target_organization_id:site.organizationId,target_site_id:site.id});
+ if(error)throw error;return data===true;
+}
+
+export async function setMinistryLeadership(personId:string,ministryId:string,isLeader:boolean):Promise<void>{
+ const {error}=await getSupabaseBrowserClient().rpc("set_ministry_leadership",{target_person_id:personId,target_ministry_id:ministryId,given_is_leader:isLeader});
+ if(error)throw error;
 }

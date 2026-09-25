@@ -33,7 +33,7 @@ export type Person = {
 export type PersonProfileDetails = {
   family?: { id: string; name: string; memberCount: number };
   enrollments: Array<{ id: string; program: string; group: string; progress: number; status: string }>;
-  ministries: Array<{ id: string; name: string; position: string }>;
+  ministries: Array<{ id: string; ministryId: string; name: string; position: string; isLeader: boolean; isPrimary: boolean; current: boolean }>;
 };
 
 export type PersonDraft = Pick<
