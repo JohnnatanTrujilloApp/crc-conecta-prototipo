@@ -32,6 +32,8 @@ declare
  actor_id uuid:=auth.uid(); target public.ministries%rowtype;
  member public.person_ministries%rowtype; account_id uuid; ministry_role_id uuid;
  existing_role public.user_roles%rowtype; other_leadership boolean;
+ membership_count integer:=0; changed_count integer:=0;
+ representative_id uuid; previous_is_leader boolean:=false;
 begin
  if actor_id is null or given_is_leader is null then raise exception 'MINISTRY_LEADERSHIP_DENIED'; end if;
  select * into target from public.ministries where id=target_ministry_id and active for update;
@@ -48,14 +50,21 @@ begin
  if not exists(select 1 from public.people p where p.id=target_person_id
    and p.organization_id=target.organization_id and p.site_id=target.site_id and p.archived_at is null)
  then raise exception 'MINISTRY_PERSON_OUT_OF_SCOPE'; end if;
- select * into member from public.person_ministries pm
- where pm.person_id=target_person_id and pm.ministry_id=target.id
-  and pm.organization_id=target.organization_id and pm.site_id=target.site_id
-  and pm.active and pm.start_date<=current_date
-  and(pm.end_date is null or pm.end_date>=current_date)
- order by pm.start_date desc,pm.id desc limit 1 for update;
- if not found then raise exception 'MINISTRY_MEMBERSHIP_REQUIRED'; end if;
- if member.is_leader=given_is_leader then return given_is_leader; end if;
+ -- Todas las filas vigentes forman una sola designación lógica. Un vínculo
+ -- histórico duplicado no puede conservar autoridad tras una revocación.
+ for member in
+  select pm.* from public.person_ministries pm
+  where pm.person_id=target_person_id and pm.ministry_id=target.id
+   and pm.organization_id=target.organization_id and pm.site_id=target.site_id
+   and pm.active and pm.start_date<=current_date
+   and(pm.end_date is null or pm.end_date>=current_date)
+  order by pm.id for update
+ loop
+  membership_count:=membership_count+1;
+  representative_id:=coalesce(representative_id,member.id);
+  previous_is_leader:=previous_is_leader or member.is_leader;
+ end loop;
+ if membership_count=0 then raise exception 'MINISTRY_MEMBERSHIP_REQUIRED'; end if;
  if not given_is_leader and target.leader_person_id=target_person_id
  then raise exception 'MINISTRY_PRIMARY_LEADER_CHANGE_REQUIRED'; end if;
  select ua.id into account_id from public.user_accounts ua
@@ -83,13 +92,19 @@ begin
        actor_id,true,now(),true);
    end if;
  end if;
- update public.person_ministries set is_leader=given_is_leader where id=member.id;
+ update public.person_ministries pm set is_leader=given_is_leader
+ where pm.person_id=target_person_id and pm.ministry_id=target.id
+  and pm.organization_id=target.organization_id and pm.site_id=target.site_id
+  and pm.active and pm.start_date<=current_date
+  and(pm.end_date is null or pm.end_date>=current_date)
+  and pm.is_leader is distinct from given_is_leader;
+ get diagnostics changed_count=row_count;
  insert into public.audit_logs(organization_id,site_id,user_id,action,entity_type,entity_id,old_values,new_values)
  values(target.organization_id,target.site_id,actor_id,
   case when given_is_leader then 'MINISTRY_LEADERSHIP_GRANTED' else 'MINISTRY_LEADERSHIP_REVOKED' end,
-  'PERSON_MINISTRY',member.id,
-  jsonb_build_object('personId',target_person_id,'ministryId',target.id,'isLeader',member.is_leader),
-  jsonb_build_object('personId',target_person_id,'ministryId',target.id,'isLeader',given_is_leader));
+  'PERSON_MINISTRY',representative_id,
+  jsonb_build_object('personId',target_person_id,'ministryId',target.id,'isLeader',previous_is_leader,'membershipCount',membership_count),
+  jsonb_build_object('personId',target_person_id,'ministryId',target.id,'isLeader',given_is_leader,'membershipCount',membership_count,'changedCount',changed_count));
  if not given_is_leader then
    select exists(select 1 from public.person_ministries pm
     join public.ministries m on m.id=pm.ministry_id
