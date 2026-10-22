@@ -6,6 +6,7 @@ import { PeopleView } from "@/features/people/PeopleView";
 import { AccessView } from "@/features/access/AccessView";
 import { FamiliesView } from "@/features/families/FamiliesView";
 import { MinistriesView } from "@/features/ministries/MinistriesView";
+import { loadAvailableMinistries } from "@/features/ministries/repository";
 import { WorshipView } from "@/features/worship/WorshipView";
 import { WorshipExportButton } from "@/features/worship/WorshipExportButton";
 import { KidsView } from "@/features/kids/KidsView";
@@ -50,10 +51,16 @@ function Application(){
   const [searchOpen,setSearchOpen]=useState(false);
   const [attendanceCount,setAttendanceCount]=useState(32);
   const [activeSiteName,setActiveSiteName]=useState("Sede autorizada");
+  const [activeSiteId,setActiveSiteId]=useState("");
+  const [ministriesOpen,setMinistriesOpen]=useState(false);
+  const [ministriesManuallyClosed,setMinistriesManuallyClosed]=useState(false);
+  const [ministryOptions,setMinistryOptions]=useState<Awaited<ReturnType<typeof loadAvailableMinistries>>>([]);
+  const [ministryMenuError,setMinistryMenuError]=useState(false);
+  const [selectedMinistryId,setSelectedMinistryId]=useState<string|null>(null);
   const [alertCount,setAlertCount]=useState(0);
   const[portal,setPortal]=useState<PortalContext|null>(null);const[portalLoading,setPortalLoading]=useState(false);const[portalError,setPortalError]=useState("");
   const[portalAttempt,setPortalAttempt]=useState(0);
-  useEffect(()=>{const sync=()=>{if(new URLSearchParams(window.location.search).get("public")==="1")setView("public");else if(window.location.pathname==="/admin/personas")setView("people")};sync();window.addEventListener("popstate",sync);return()=>window.removeEventListener("popstate",sync)},[]);
+  useEffect(()=>{let active=true;const sync=()=>{if(!active)return;const path=window.location.pathname;if(new URLSearchParams(window.location.search).get("public")==="1")setView("public");else if(path==="/admin/personas")setView("people");else if(path==="/admin/ministerios"||path.startsWith("/admin/ministerios/")){setView("ministries");setSelectedMinistryId(path.startsWith("/admin/ministerios/")?decodeURIComponent(path.slice("/admin/ministerios/".length)):null)}else setView("dashboard")};queueMicrotask(sync);window.addEventListener("popstate",sync);return()=>{active=false;window.removeEventListener("popstate",sync)}},[]);
   const accessToken=session?.access_token;
   useEffect(()=>{if(!configured||!accessToken){setPortal(null);setPortalLoading(false);return}let active=true;setPortalLoading(true);setPortalError("");const deadline=window.setTimeout(()=>{if(!active)return;active=false;setPortal(null);setPortalLoading(false);setPortalError("La validación tardó más de 12 segundos. Puedes reintentar o cerrar la sesión.")},12500);void loadPortalContext(accessToken,10000).then(next=>{if(!active)return;setPortal(next);setPortalError("")}).catch(error=>{if(!active)return;setPortal(null);setPortalError(error instanceof Error&&error.message==="PORTAL_CONTEXT_TIMEOUT"?"La validación tardó más de 12 segundos. Puedes reintentar o cerrar la sesión.":"No fue posible validar el acceso en este momento. Vuelve a intentarlo.")}).finally(()=>{if(active){active=false;window.clearTimeout(deadline);setPortalLoading(false)}});return()=>{active=false;window.clearTimeout(deadline)}},[configured,accessToken,portalAttempt]);
   const openView=(next:View,path="/")=>{window.history.pushState({},"",path);setView(next)};
@@ -61,7 +68,12 @@ function Application(){
   const activeInitials=session?.user.email?.slice(0,2).toUpperCase()??"CRC";
   const present=useMemo(()=>students.filter(s=>s.attendance==="present").length,[students]);
   const updateStudent=(id:number,patch:Partial<Student>)=>{setSaved(false);setStudents(current=>current.map(s=>s.id===id?{...s,...patch}:s))};
-  const choose=(item:string)=>{if(item==="Inicio")setView("dashboard");if(item==="Personas")setView("people");if(item==="Familias")setView("families");if(item==="Ministerios")setView("ministries");if(item==="Alabanza")setView("worship");if(item==="Kids")setView("kids");if(item==="Asistencia")setView("attendance");if(item==="Discipulado")setView("discipleship");if(item==="Formación")setView("training");if(item==="Seguimiento")setView("followups");if(item==="Reportes")setView("reports");if(item==="Contenido")setView("content");if(item==="Accesos")setView("access");setMenuOpen(false)};
+  const choose=(item:string)=>{if(window.location.pathname.startsWith("/admin/ministerios"))window.history.pushState({},"","/");if(item==="Inicio")setView("dashboard");if(item==="Personas")setView("people");if(item==="Familias")setView("families");if(item==="Ministerios")setView("ministries");if(item==="Alabanza")setView("worship");if(item==="Kids")setView("kids");if(item==="Asistencia")setView("attendance");if(item==="Discipulado")setView("discipleship");if(item==="Formación")setView("training");if(item==="Seguimiento")setView("followups");if(item==="Reportes")setView("reports");if(item==="Contenido")setView("content");if(item==="Accesos")setView("access");setMenuOpen(false)};
+  const openMinistry=(id:string|null)=>{setSelectedMinistryId(id);openView("ministries",id?`/admin/ministerios/${encodeURIComponent(id)}`:"/admin/ministerios");setMinistriesOpen(true);setMinistriesManuallyClosed(false);setMenuOpen(false)};
+  const canUseMinistryMenu=Boolean(portal?.permissions.includes("ministries.read")&&portal.roles.some(role=>["SUPER_ADMIN","NATIONAL_PASTOR","REGIONAL_PASTOR"].includes(role)));
+  const ministriesExpanded=ministriesOpen||(view==="ministries"&&!ministriesManuallyClosed);
+  const displayedMinistries=ministryOptions.filter(ministry=>ministry.siteId===(activeSiteId||portal?.siteId));
+  useEffect(()=>{if(!canUseMinistryMenu||!ministriesExpanded)return;let active=true;const refresh=()=>{void loadAvailableMinistries(activeSiteId||portal?.siteId||"").then(rows=>{if(active){setMinistryOptions(rows);setMinistryMenuError(false)}}).catch(()=>{if(active)setMinistryMenuError(true)})};refresh();window.addEventListener("focus",refresh);window.addEventListener("ministries-changed",refresh);return()=>{active=false;window.removeEventListener("focus",refresh);window.removeEventListener("ministries-changed",refresh)}},[canUseMinistryMenu,ministriesExpanded,activeSiteId,portal?.siteId]);
 
   if(view==="register")return <RegistrationView onPublic={()=>openView("public")} onCampus={()=>openView("dashboard")}/>;
   if(view==="public")return <PublicSiteView onCampus={()=>openView("dashboard")} onRegister={()=>openView("register","/registro")}/>;
@@ -82,7 +94,7 @@ function Application(){
       <button className="brand brand-button" onClick={()=>setView("dashboard")}><div className="brand-mark">CRC</div><div><strong>CRC Conecta</strong><span>Acompañar · Formar · Crecer</span></div></button>
       <div className="sidebar-nav-scroll">
         <span className="sidebar-section-label">Navegación</span>
-        <nav aria-label="Navegación principal">{visibleNav.map(item=><button key={item.label} className={(effectiveView==="dashboard"&&item.label==="Inicio")||(effectiveView==="people"&&item.label==="Personas")||(effectiveView==="families"&&item.label==="Familias")||(effectiveView==="ministries"&&item.label==="Ministerios")||(effectiveView==="worship"&&item.label==="Alabanza")||(effectiveView==="kids"&&item.label==="Kids")||(effectiveView==="attendance"&&item.label==="Asistencia")||((effectiveView==="discipleship"||effectiveView==="classroom")&&item.label==="Discipulado")||(effectiveView==="training"&&item.label==="Formación")||(effectiveView==="followups"&&item.label==="Seguimiento")||(effectiveView==="reports"&&item.label==="Reportes")||(effectiveView==="content"&&item.label==="Contenido")||(effectiveView==="access"&&item.label==="Accesos")?"nav-active":""} onClick={()=>choose(item.label)}><span className="nav-dot"/>{item.label}</button>)}</nav>
+        <nav aria-label="Navegación principal">{visibleNav.map(item=>item.label==="Ministerios"&&canUseMinistryMenu?<div className="ministry-nav-group" key={item.label}><div className="ministry-nav-heading"><button className={effectiveView==="ministries"&&!selectedMinistryId?"nav-active":""} onClick={()=>openMinistry(null)}><span className="nav-dot"/>Ministerios</button><button className="ministry-nav-toggle" type="button" aria-label={ministriesExpanded?"Contraer Ministerios":"Expandir Ministerios"} aria-expanded={ministriesExpanded} aria-controls="ministry-nav-items" onClick={()=>{setMinistriesOpen(!ministriesExpanded);setMinistriesManuallyClosed(ministriesExpanded)}}>{ministriesExpanded?"⌄":"›"}</button></div>{ministriesExpanded&&<div id="ministry-nav-items" className="ministry-nav-items">{ministryMenuError?<span role="status">No fue posible cargar los ministerios.</span>:displayedMinistries.length?displayedMinistries.map(ministry=><button key={ministry.id} className={effectiveView==="ministries"&&selectedMinistryId===ministry.id?"nav-active":""} onClick={()=>openMinistry(ministry.id)}><span aria-hidden="true">›</span>{ministry.name}</button>):<span role="status">No hay ministerios disponibles en esta sede.</span>}</div>}</div>:<button key={item.label} className={(effectiveView==="dashboard"&&item.label==="Inicio")||(effectiveView==="people"&&item.label==="Personas")||(effectiveView==="families"&&item.label==="Familias")||(effectiveView==="ministries"&&item.label==="Ministerios")||(effectiveView==="worship"&&item.label==="Alabanza")||(effectiveView==="kids"&&item.label==="Kids")||(effectiveView==="attendance"&&item.label==="Asistencia")||((effectiveView==="discipleship"||effectiveView==="classroom")&&item.label==="Discipulado")||(effectiveView==="training"&&item.label==="Formación")||(effectiveView==="followups"&&item.label==="Seguimiento")||(effectiveView==="reports"&&item.label==="Reportes")||(effectiveView==="content"&&item.label==="Contenido")||(effectiveView==="access"&&item.label==="Accesos")?"nav-active":""} onClick={()=>choose(item.label)}><span className="nav-dot"/>{item.label}</button>)}</nav>
       </div>
       <div className="sidebar-utilities" aria-label="Utilidades">
         <button className="public-link" onClick={()=>setView("public")}><span>↗</span><span><strong>Ver portal público</strong><small>Abrir el sitio de CRC</small></span></button>
@@ -93,13 +105,13 @@ function Application(){
     <main>
       <header className="topbar"><button className="menu-button" aria-label="Abrir menú" onClick={()=>setMenuOpen(!menuOpen)}>☰</button><div className="site-picker"><span className="pin">●</span><div><small>Sede activa</small><strong>{activeSiteName}</strong></div></div><div className="top-actions"><button aria-label="Buscar" onClick={()=>setSearchOpen(true)}>⌕</button><button className="bell" aria-label={`${alertCount} notificaciones`} onClick={()=>setView("dashboard")}>♢{alertCount>0&&<i>{alertCount}</i>}</button><div className="active-session"><div className="avatar avatar-dark">{activeInitials}</div><div className="active-session-copy"><small>Sesión activa</small><strong title={activeEmail}>{activeEmail}</strong></div></div>{configured&&session&&<button className="logout-button" onClick={()=>void signOut()} aria-label={`Cambiar usuario; cerrar sesión de ${activeEmail}`} title="Cerrar esta sesión e ingresar con otra cuenta">Cambiar usuario</button>}</div></header>
       {effectiveView==="dashboard"
-        ? <DashboardView onSite={setActiveSiteName} onAlerts={setAlertCount} navigate={action=>setView(action)}/>
+        ? <DashboardView onSite={(name,id)=>{setActiveSiteName(name);setActiveSiteId(id)}} onAlerts={setAlertCount} navigate={action=>setView(action)}/>
         : effectiveView==="people"
           ? <PeopleView/>
           : effectiveView==="families"
             ? <FamiliesView onPerson={()=>setView("people")}/>
             : effectiveView==="ministries"
-              ? <MinistriesView/>
+              ? <MinistriesView selectedId={selectedMinistryId} activeSiteId={activeSiteId||portal.siteId||""} canManage={effective.has("ministries.manage")} onSelect={openMinistry}/>
               : effectiveView==="worship"
                 ? <><WorshipExportButton/><WorshipView/></>
               : effectiveView==="kids"
